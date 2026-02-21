@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Beside Her – Sign Up</title>
+  <link rel="stylesheet" href="/static/css/style.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="logo">Beside <span>Her</span></a>
+</nav>
+
+<div class="page">
+  <div class="auth-card">
+
+    <div class="auth-header">
+      <div class="auth-icon">🌸</div>
+      <h2>Create your account</h2>
+      <p class="auth-sub">Who are you in this journey?</p>
+    </div>
+
+    <!-- Role selector -->
+    <div class="role-select">
+      <button class="role-btn active" 
+              id="btn-mom" 
+              onclick="setRole('mom')">
+        🌸 I'm the Mom
+      </button>
+      <button class="role-btn" 
+              id="btn-partner" 
+              onclick="setRole('partner')">
+        🤍 I'm the Partner
+      </button>
+    </div>
+
+    <form id="signup-form">
+
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" 
+               id="email" 
+               placeholder="your@email.com" 
+               required/>
+      </div>
+
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" 
+               id="password" 
+               placeholder="minimum 6 characters" 
+               required/>
+      </div>
+
+      <!-- Mom only fields -->
+      <div id="mom-fields">
+
+        <div class="form-group">
+          <label>
+            Your name 
+            <span class="optional">(optional)</span>
+          </label>
+          <input type="text" 
+                 id="name" 
+                 placeholder="What should we call you?"/>
+        </div>
+
+        <div class="form-group">
+          <label>Baby's date of birth</label>
+          <input type="date" id="baby-dob" required/>
+          <small class="field-hint">
+            This helps us understand your postpartum stage
+          </small>
+        </div>
+
+      </div>
+
+      <!-- Partner only fields -->
+      <div id="partner-fields" class="hidden">
+
+        <div class="form-group">
+          <label>Partner code</label>
+          <input type="text" 
+                 id="partner-code" 
+                 placeholder="Ask your partner for their code"
+                 style="text-transform: uppercase;"/>
+          <small class="field-hint">
+            Your partner will find their code on their profile page 
+            after signing up
+          </small>
+        </div>
+
+      </div>
+
+      <button type="submit" class="submit-btn">
+        Create Account →
+      </button>
+
+    </form>
+
+    <p class="auth-switch">
+      Already have an account? 
+      <a href="/login">Sign in here</a>
+    </p>
+
+    <div id="auth-error" class="auth-error hidden"></div>
+    <div id="auth-success" class="auth-success hidden"></div>
+
+  </div>
+</div>
+
+<script>
+  let currentRole = 'mom';
+
+  function setRole(role) {
+    currentRole = role;
+
+    document.getElementById('btn-mom')
+      .classList.toggle('active', role === 'mom');
+    document.getElementById('btn-partner')
+      .classList.toggle('active', role === 'partner');
+    document.getElementById('mom-fields')
+      .classList.toggle('hidden', role !== 'mom');
+    document.getElementById('partner-fields')
+      .classList.toggle('hidden', role !== 'partner');
+
+    // Update required on baby-dob
+    document.getElementById('baby-dob').required = (role === 'mom');
+  }
+
+  document.getElementById('signup-form')
+    .addEventListener('submit', async e => {
+      e.preventDefault();
+
+      const btn = document.querySelector('.submit-btn');
+      btn.textContent = 'Creating account...';
+      btn.disabled = true;
+
+      const email    = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const name     = document.getElementById('name')?.value || '';
+      const babyDob  = document.getElementById('baby-dob')?.value || '';
+      const code     = document.getElementById('partner-code')
+                                ?.value?.toUpperCase() || '';
+
+      try {
+        const res = await fetch('/api/signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email,
+            password,
+            role:         currentRole,
+            name,
+            baby_dob:     babyDob,
+            partner_code: code
+          })
+        });
+
+        const data = await res.json();
+
+        if (data.error) {
+          showError(data.error);
+          btn.textContent = 'Create Account →';
+          btn.disabled = false;
+          return;
+        }
+
+        // Show partner code to mom before redirecting
+        if (currentRole === 'mom' && data.partner_code) {
+          showSuccess(
+            `Account created! 🎉<br><br>
+             Your partner code is: 
+             <strong style="font-size:1.4rem; 
+                            letter-spacing:0.1em; 
+                            color: var(--plum)">
+               ${data.partner_code}
+             </strong><br><br>
+             Share this with your partner so they 
+             can link to your account.<br><br>
+             Redirecting you in 5 seconds...`
+          );
+          setTimeout(() => {
+            window.location.href = data.redirect;
+          }, 5000);
+        } else {
+          window.location.href = data.redirect;
+        }
+
+      } catch (err) {
+        showError('Something went wrong. Please try again.');
+        btn.textContent = 'Create Account →';
+        btn.disabled = false;
+      }
+  });
+
+  function showError(msg) {
+    const el = document.getElementById('auth-error');
+    el.innerHTML = msg;
+    el.classList.remove('hidden');
+    document.getElementById('auth-success').classList.add('hidden');
+  }
+
+  function showSuccess(msg) {
+    const el = document.getElementById('auth-success');
+    el.innerHTML = msg;
+    el.classList.remove('hidden');
+    document.getElementById('auth-error').classList.add('hidden');
+  }
+</script>
+
+</body>
+</html>

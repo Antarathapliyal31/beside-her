@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Beside Her: Partner Dashboard</title>
+  <link rel="stylesheet" href="/static/css/style.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="logo">Beside <span>Her</span></a>
+  <div class="nav-links">
+    <a href="/partner" class="active">Dashboard</a>
+    <a href="/chat">Ask AI</a>
+    <a href="/report">Week</a>
+  </div>
+</nav>
+
+<div class="page wide">
+
+  <!-- Confidence indicator -->
+  <div class="confidence-bar" id="confidence-bar">
+    <div class="conf-icon">📊</div>
+    <div class="conf-text">
+      <div class="conf-title" id="conf-title">Loading...</div>
+      <div class="conf-sub" id="conf-sub"></div>
+    </div>
+    <div class="conf-badge" id="conf-badge"></div>
+  </div>
+
+  <!-- Silence alert (hidden by default) -->
+  <div class="silence-alert hidden" id="silence-alert">
+    <div class="silence-icon">🔔</div>
+    <div>
+      <h4 id="silence-title">She hasn't checked in recently</h4>
+      <p id="silence-msg">This can sometimes mean she is struggling 
+      more than she is saying. Try checking in with her gently today.</p>
+    </div>
+  </div>
+
+  <!-- ML Stats panel -->
+  <div class="stats-card hidden" id="stats-card">
+    <div class="stats-header">
+      <h2>How she's really doing</h2>
+      <span class="ml-badge">ML Analysis</span>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-box">
+        <div class="stat-label">Support Needed</div>
+        <div class="stat-value" id="stat-severity">—</div>
+        <div class="stat-sub">out of 10</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Mood Trend</div>
+        <div class="stat-value" id="stat-mood">—</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Anxiety</div>
+        <div class="stat-value" id="stat-anxiety">—</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Pattern</div>
+        <div class="stat-value" id="stat-pattern">—</div>
+      </div>
+    </div>
+    <div id="flags-list" class="flags-list"></div>
+  </div>
+
+  <!-- Daily AI digest -->
+  <div class="digest-card">
+    <div class="digest-tag">Today's Guidance</div>
+    <h2>How to show up for her today</h2>
+    <div id="digest-text" class="digest-body">
+      <p class="loading-text">Analysing her recent check-ins...</p>
+    </div>
+    <button class="refresh-btn" onclick="loadDigest()">
+      ↻ Refresh
+    </button>
+  </div>
+
+  <!-- Charts -->
+  <div class="charts-grid">
+    <div class="chart-card">
+      <h3>Mood & Anxiety</h3>
+      <canvas id="chart-main"></canvas>
+    </div>
+    <div class="chart-card">
+      <h3>Energy & Sleep</h3>
+      <canvas id="chart-energy"></canvas>
+    </div>
+  </div>
+
+  <!-- Recent check-ins -->
+  <div class="checkins-card">
+    <h2>Recent Check-Ins</h2>
+    <div id="checkins-list" class="checkins-list">
+      <div class="empty-state">
+        <span>💌</span>
+        <p>Waiting for her first check-in.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Partner observation form -->
+  <div class="obs-card">
+    <div class="obs-tag">Your Observation</div>
+    <h2>I noticed something today</h2>
+    <p class="obs-sub">She didn't log today — or you noticed 
+    something she didn't mention. Log what you saw.</p>
+
+    <div class="signals-grid" id="signals-grid">
+      <button class="sig-btn" data-sig="withdrawn">
+        😶 Seems withdrawn
+      </button>
+      <button class="sig-btn" data-sig="crying">
+        😢 Crying / tearful
+      </button>
+      <button class="sig-btn" data-sig="skipped_meals">
+        🍽 Skipped meals
+      </button>
+      <button class="sig-btn" data-sig="didnt_sleep">
+        😩 Didn't sleep well
+      </button>
+      <button class="sig-btn" data-sig="overwhelmed">
+        🌀 Seemed overwhelmed
+      </button>
+      <button class="sig-btn" data-sig="positive">
+        🌟 Had a good moment
+      </button>
+    </div>
+
+    <textarea 
+      id="obs-note" 
+      rows="2" 
+      placeholder="Anything else you noticed today… (optional)">
+    </textarea>
+
+    <button class="obs-submit-btn" onclick="logObservation()">
+      Log Observation
+    </button>
+    <div id="obs-success" class="obs-success hidden">
+      ✓ Logged — this will inform her AI guidance.
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const moodEm  = ["","😞","😔","😐","🙂","😊"];
+  const anxEm   = ["","😌","😶","😟","😰","😱"];
+  const enEm    = ["","🪫","😴","🚶","🏃","⚡"];
+  const slEm    = ["","😩","😪","😶","😌","😴"];
+
+  // ── Load check-ins and charts ──────────────────
+  async function loadCharts() {
+    const res  = await fetch('/api/checkins');
+    const data = (await res.json()).slice(0, 14).reverse();
+
+    // Update confidence indicator
+    updateConfidence(data.length);
+
+    // Check for silence (no log in 2+ days)
+    checkSilence(data);
+
+    if (!data.length) return;
+
+    const labels = data.map(d => d.date.slice(5));
+
+    // Mood & anxiety chart
+    new Chart(document.getElementById('chart-main'), {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: 'Mood',
+            data: data.map(d => d.mood),
+            borderColor: '#7aac8a',
+            backgroundColor: 'rgba(122,172,138,0.08)',
+            tension: 0.4,
+            fill: true,
+            pointRadius: 5,
+            pointBackgroundColor: '#7aac8a'
+          },
+          {
+            label: 'Anxiety',
+            data: data.map(d => d.anxiety),
+            borderColor: '#e8738a',
+            backgroundColor: 'rgba(232,115,138,0.08)',
+            tension: 0.4,
+            fill: true,
+            pointRadius: 5,
+            pointBackgroundColor: '#e8738a'
+          }
+        ]
+      },
+      options: {
+        scales: { y: { min: 1, max: 5 } },
+        plugins: { legend: { position: 'bottom' } }
+      }
+    });
+
+    // Energy & sleep chart
+    new Chart(document.getElementById('chart-energy'), {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: 'Energy',
+            data: data.map(d => d.energy),
+            borderColor: '#f5a623',
+            backgroundColor: 'rgba(245,166,35,0.08)',
+            tension: 0.4,
+            fill: true,
+            pointRadius: 5,
+            pointBackgroundColor: '#f5a623'
+          },
+          {
+            label: 'Sleep',
+            data: data.map(d => d.sleep_quality),
+            borderColor: '#a8c4d0',
+            backgroundColor: 'rgba(168,196,208,0.08)',
+            tension: 0.4,
+            fill: true,
+            pointRadius: 5,
+            pointBackgroundColor: '#a8c4d0'
+          }
+        ]
+      },
+      options: {
+        scales: { y: { min: 1, max: 5 } },
+        plugins: { legend: { position: 'bottom' } }
+      }
+    });
+
+    // Recent check-ins list
+    document.getElementById('checkins-list').innerHTML =
+      data.slice().reverse().slice(0, 7).map(d => `
+        <div class="ci-item">
+          <div class="ci-date">${d.date}</div>
+          <div class="ci-pills">
+            ${d.mood ? 
+              `<span class="pill mood-pill">
+                ${moodEm[d.mood]} Mood ${d.mood}/5
+              </span>` : ''}
+            ${d.anxiety ? 
+              `<span class="pill anx-pill">
+                ${anxEm[d.anxiety]} Anxiety ${d.anxiety}/5
+              </span>` : ''}
+            ${d.energy ? 
+              `<span class="pill en-pill">
+                ${enEm[d.energy]} Energy ${d.energy}/5
+              </span>` : ''}
+            ${d.sleep_quality ? 
+              `<span class="pill sl-pill">
+                ${slEm[d.sleep_quality]} Sleep ${d.sleep_quality}/5
+              </span>` : ''}
+          </div>
+          ${d.notes ? 
+            `<div class="ci-note">"${d.notes}"</div>` : ''}
+        </div>`).join('');
+  }
+
+  // ── Confidence indicator ───────────────────────
+  function updateConfidence(count) {
+    const bar   = document.getElementById('confidence-bar');
+    const title = document.getElementById('conf-title');
+    const sub   = document.getElementById('conf-sub');
+    const badge = document.getElementById('conf-badge');
+
+    if (count === 0) {
+      title.textContent = 'No check-ins yet';
+      sub.textContent   = 'Share the check-in link with her to get started';
+      badge.textContent = '🌱 Getting Started';
+      badge.className   = 'conf-badge badge-start';
+    } else if (count < 3) {
+      title.textContent = `${count} check-in${count>1?'s':''} so far`;
+      sub.textContent   = 'Encourage her to log daily — patterns will emerge soon';
+      badge.textContent = '🌱 Getting Started';
+      badge.className   = 'conf-badge badge-start';
+    } else if (count < 7) {
+      title.textContent = `${count} check-ins — early patterns forming`;
+      sub.textContent   = 'Guidance is preliminary — confidence grows with more data';
+      badge.textContent = '🌤 Early Patterns';
+      badge.className   = 'conf-badge badge-early';
+    } else {
+      title.textContent = `${count} check-ins — full analysis active`;
+      sub.textContent   = 'High confidence — ML is detecting real patterns';
+      badge.textContent = '🔬 Full Analysis';
+      badge.className   = 'conf-badge badge-full';
+    }
+  }
+
+  // ── Silence detection ──────────────────────────
+  function checkSilence(data) {
+    if (!data.length) return;
+    const last     = new Date(data[data.length - 1].date);
+    const today    = new Date();
+    const diffDays = Math.floor((today - last) / (1000*60*60*24));
+
+    if (diffDays >= 2) {
+      const alert = document.getElementById('silence-alert');
+      alert.classList.remove('hidden');
+      document.getElementById('silence-title').textContent =
+        `She hasn't checked in for ${diffDays} day${diffDays>1?'s':''}`;
+    }
+  }
+
+  // ── AI digest (placeholder for now) ───────────
+  async function loadDigest() {
+    document.getElementById('digest-text').innerHTML =
+      '<p class="loading-text">Analysing her patterns...</p>';
+
+    // We will connect this to Gemini after ML is built
+    setTimeout(() => {
+      document.getElementById('digest-text').innerHTML = `
+        <p>🔧 AI guidance will appear here once the ML layer is connected.</p>
+        <p>For now you can see her check-in data in the charts below.</p>
+      `;
+    }, 1000);
+  }
+
+  // ── Observation signals ────────────────────────
+  document.querySelectorAll('.sig-btn').forEach(btn => {
+    btn.addEventListener('click', () => btn.classList.toggle('on'));
+  });
+
+  async function logObservation() {
+    const signals = [...document.querySelectorAll('.sig-btn.on')]
+      .map(b => b.dataset.sig);
+    const note = document.getElementById('obs-note').value;
+
+    await fetch('/api/observation', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        date: new Date().toISOString().slice(0, 10),
+        note,
+        signals
+      })
+    });
+
+    document.querySelectorAll('.sig-btn').forEach(b => 
+      b.classList.remove('on'));
+    document.getElementById('obs-note').value = '';
+    document.getElementById('obs-success').classList.remove('hidden');
+    setTimeout(() => 
+      document.getElementById('obs-success').classList.add('hidden'), 
+    3000);
+  }
+
+  // ── Init ───────────────────────────────────────
+  loadCharts();
+  loadDigest();
+</script>
+
+</body>
+</html>

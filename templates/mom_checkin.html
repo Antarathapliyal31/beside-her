@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Beside Her – Check In</title>
+  <link rel="stylesheet" href="/static/css/style.css"/>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="logo">Beside <span>Her</span></a>
+  <div class="nav-links">
+    <a href="/mom" class="active">Check In</a>
+    <a href="/mom/history">My Journey</a>
+  </div>
+</nav>
+
+<div class="page">
+
+  <div class="checkin-card">
+
+    <!-- Header -->
+    <div class="checkin-header">
+      <div class="checkin-icon">🌸</div>
+      <h2>How are you feeling today?</h2>
+      <div class="time-badge">⏱ 60 seconds</div>
+      <p class="checkin-sub">
+        No right or wrong answers. 
+        Your partner will know exactly how to show up for you.
+      </p>
+    </div>
+
+    <!-- Form -->
+    <form id="checkin-form">
+
+      <div class="form-group">
+        <label>Date</label>
+        <input type="date" id="date"/>
+      </div>
+
+      <div class="form-group">
+        <label>Overall Mood</label>
+        <div class="emoji-scale" data-field="mood">
+          <button type="button" class="e-btn" data-val="1">
+            <span class="em">😞</span>
+            <span class="lbl">Very Low</span>
+          </button>
+          <button type="button" class="e-btn" data-val="2">
+            <span class="em">😔</span>
+            <span class="lbl">Low</span>
+          </button>
+          <button type="button" class="e-btn" data-val="3">
+            <span class="em">😐</span>
+            <span class="lbl">Okay</span>
+          </button>
+          <button type="button" class="e-btn" data-val="4">
+            <span class="em">🙂</span>
+            <span class="lbl">Good</span>
+          </button>
+          <button type="button" class="e-btn" data-val="5">
+            <span class="em">😊</span>
+            <span class="lbl">Great</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Anxiety Level</label>
+        <div class="emoji-scale" data-field="anxiety">
+          <button type="button" class="e-btn" data-val="1">
+            <span class="em">😌</span>
+            <span class="lbl">None</span>
+          </button>
+          <button type="button" class="e-btn" data-val="2">
+            <span class="em">😶</span>
+            <span class="lbl">Mild</span>
+          </button>
+          <button type="button" class="e-btn" data-val="3">
+            <span class="em">😟</span>
+            <span class="lbl">Moderate</span>
+          </button>
+          <button type="button" class="e-btn" data-val="4">
+            <span class="em">😰</span>
+            <span class="lbl">High</span>
+          </button>
+          <button type="button" class="e-btn" data-val="5">
+            <span class="em">😱</span>
+            <span class="lbl">Very High</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Energy Level</label>
+        <div class="emoji-scale" data-field="energy">
+          <button type="button" class="e-btn" data-val="1">
+            <span class="em">🪫</span>
+            <span class="lbl">Empty</span>
+          </button>
+          <button type="button" class="e-btn" data-val="2">
+            <span class="em">😴</span>
+            <span class="lbl">Low</span>
+          </button>
+          <button type="button" class="e-btn" data-val="3">
+            <span class="em">🚶</span>
+            <span class="lbl">Okay</span>
+          </button>
+          <button type="button" class="e-btn" data-val="4">
+            <span class="em">🏃</span>
+            <span class="lbl">Good</span>
+          </button>
+          <button type="button" class="e-btn" data-val="5">
+            <span class="em">⚡</span>
+            <span class="lbl">Energized</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Sleep Quality</label>
+        <div class="emoji-scale" data-field="sleep_quality">
+          <button type="button" class="e-btn" data-val="1">
+            <span class="em">😩</span>
+            <span class="lbl">Terrible</span>
+          </button>
+          <button type="button" class="e-btn" data-val="2">
+            <span class="em">😪</span>
+            <span class="lbl">Poor</span>
+          </button>
+          <button type="button" class="e-btn" data-val="3">
+            <span class="em">😶</span>
+            <span class="lbl">Fair</span>
+          </button>
+          <button type="button" class="e-btn" data-val="4">
+            <span class="em">😌</span>
+            <span class="lbl">Good</span>
+          </button>
+          <button type="button" class="e-btn" data-val="5">
+            <span class="em">😴</span>
+            <span class="lbl">Great</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>
+          Anything your partner should know?
+          <span class="optional">(optional)</span>
+        </label>
+        <textarea
+          id="notes"
+          rows="3"
+          placeholder="I've been feeling… / I could really use… / Today was hard because…">
+        </textarea>
+      </div>
+
+      <button type="submit" class="submit-btn">
+        Send to My Partner 💌
+      </button>
+
+    </form>
+
+    <!-- Success screen -->
+    <div id="success" class="success-msg hidden">
+      <span class="success-icon">💌</span>
+      <h3>Your partner knows</h3>
+      <p>
+        They'll see your check-in and get personalised 
+        guidance on how to show up for you today.
+      </p>
+      <button onclick="resetForm()" class="reset-btn">
+        Log another day
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  document.getElementById("date").valueAsDate = new Date();
+
+  const vals = {
+    mood: null,
+    anxiety: null,
+    energy: null,
+    sleep_quality: null
+  };
+
+  // Emoji selection
+  document.querySelectorAll('.emoji-scale').forEach(scale => {
+    scale.querySelectorAll('.e-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        scale.querySelectorAll('.e-btn')
+             .forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        vals[scale.dataset.field] = parseInt(btn.dataset.val);
+      });
+    });
+  });
+
+  // Form submit
+  document.getElementById('checkin-form')
+          .addEventListener('submit', async e => {
+    e.preventDefault();
+
+    if (Object.values(vals).some(v => v === null)) {
+      alert('Please answer all four questions 🙂');
+      return;
+    }
+
+    await fetch('/api/checkin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        date:  document.getElementById('date').value,
+        notes: document.getElementById('notes').value,
+        ...vals
+      })
+    });
+
+    document.getElementById('checkin-form').classList.add('hidden');
+    document.getElementById('success').classList.remove('hidden');
+  });
+
+  // Reset form for another day
+  function resetForm() {
+    document.getElementById('checkin-form').classList.remove('hidden');
+    document.getElementById('success').classList.add('hidden');
+    document.querySelectorAll('.e-btn')
+            .forEach(b => b.classList.remove('selected'));
+    document.getElementById('notes').value = '';
+    document.getElementById('date').valueAsDate = new Date();
+    Object.keys(vals).forEach(k => vals[k] = null);
+  }
+</script>
+
+</body>
+</html>
