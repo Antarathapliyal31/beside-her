@@ -5,6 +5,137 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Beside Her – Check In</title>
   <link rel="stylesheet" href="/static/css/style.css"/>
+  <script type="module" src="https://cdn.jsdelivr.net/npm/vitallens/dist/vitallens.browser.js"></script>
+  <style>
+    .vitals-section {
+      background: #fff;
+      border-radius: 14px;
+      padding: 18px 20px;
+      margin: 16px 0;
+      border: 1px solid #f0e8e0;
+    }
+    .vitals-header {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      margin-bottom: 14px;
+    }
+    .vitals-header span:first-child {
+      font-weight: 600;
+      color: #2d1f1f;
+      font-size: 0.95rem;
+    }
+    .vitals-sub {
+      font-size: 0.8rem;
+      color: #aaa;
+    }
+    .scan-btn {
+      background: #6b3f6b;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 20px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      width: 100%;
+      font-family: inherit;
+    }
+    .scan-btn:hover { background: #5a335a; }
+    .scan-btn:disabled { background: #ccc; cursor: not-allowed; }
+    .vitals-result {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    .vital-pill {
+      background: #fdf5f0;
+      border: 1px solid #f0ddd0;
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-size: 0.85rem;
+      color: #7a4f3a;
+    }
+    #scanner-container {
+      margin-top: 14px;
+    }
+
+    /* ✅ Privacy UI styles */
+    .privacy-section {
+      background: #fff;
+      border-radius: 14px;
+      padding: 18px 20px;
+      margin: 16px 0;
+      border: 1px solid #f0e8e0;
+    }
+    .privacy-header {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      margin-bottom: 12px;
+    }
+    .privacy-header span:first-child {
+      font-weight: 600;
+      color: #2d1f1f;
+      font-size: 0.95rem;
+    }
+    .privacy-sub {
+      font-size: 0.8rem;
+      color: #aaa;
+    }
+    .privacy-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 10px;
+      margin-bottom: 12px;
+    }
+    .privacy-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid #f2e7df;
+      background: #fffaf6;
+    }
+    .privacy-item input {
+      margin-top: 3px;
+    }
+    .privacy-item .title {
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: #2d1f1f;
+      line-height: 1.2;
+    }
+    .privacy-item .desc {
+      font-size: 0.82rem;
+      color: #7a6b66;
+      margin-top: 3px;
+    }
+    .privacy-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .privacy-save-btn {
+      background: #6b3f6b;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 16px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      font-family: inherit;
+      flex: 1;
+    }
+    .privacy-save-btn:hover { background: #5a335a; }
+    .privacy-saved {
+      font-size: 0.85rem;
+      color: #2c7a4b;
+      display: none;
+      white-space: nowrap;
+    }
+  </style>
 </head>
 <body>
 
@@ -17,7 +148,6 @@
 </nav>
 
 <div class="page">
-
   <div class="checkin-card">
 
     <!-- Header -->
@@ -26,7 +156,7 @@
       <h2>How are you feeling today?</h2>
       <div class="time-badge">⏱ 60 seconds</div>
       <p class="checkin-sub">
-        No right or wrong answers. 
+        No right or wrong answers.
         Your partner will know exactly how to show up for you.
       </p>
     </div>
@@ -42,104 +172,44 @@
       <div class="form-group">
         <label>Overall Mood</label>
         <div class="emoji-scale" data-field="mood">
-          <button type="button" class="e-btn" data-val="1">
-            <span class="em">😞</span>
-            <span class="lbl">Very Low</span>
-          </button>
-          <button type="button" class="e-btn" data-val="2">
-            <span class="em">😔</span>
-            <span class="lbl">Low</span>
-          </button>
-          <button type="button" class="e-btn" data-val="3">
-            <span class="em">😐</span>
-            <span class="lbl">Okay</span>
-          </button>
-          <button type="button" class="e-btn" data-val="4">
-            <span class="em">🙂</span>
-            <span class="lbl">Good</span>
-          </button>
-          <button type="button" class="e-btn" data-val="5">
-            <span class="em">😊</span>
-            <span class="lbl">Great</span>
-          </button>
+          <button type="button" class="e-btn" data-val="1"><span class="em">😞</span><span class="lbl">Very Low</span></button>
+          <button type="button" class="e-btn" data-val="2"><span class="em">😔</span><span class="lbl">Low</span></button>
+          <button type="button" class="e-btn" data-val="3"><span class="em">😐</span><span class="lbl">Okay</span></button>
+          <button type="button" class="e-btn" data-val="4"><span class="em">🙂</span><span class="lbl">Good</span></button>
+          <button type="button" class="e-btn" data-val="5"><span class="em">😊</span><span class="lbl">Great</span></button>
         </div>
       </div>
 
       <div class="form-group">
         <label>Anxiety Level</label>
         <div class="emoji-scale" data-field="anxiety">
-          <button type="button" class="e-btn" data-val="1">
-            <span class="em">😌</span>
-            <span class="lbl">None</span>
-          </button>
-          <button type="button" class="e-btn" data-val="2">
-            <span class="em">😶</span>
-            <span class="lbl">Mild</span>
-          </button>
-          <button type="button" class="e-btn" data-val="3">
-            <span class="em">😟</span>
-            <span class="lbl">Moderate</span>
-          </button>
-          <button type="button" class="e-btn" data-val="4">
-            <span class="em">😰</span>
-            <span class="lbl">High</span>
-          </button>
-          <button type="button" class="e-btn" data-val="5">
-            <span class="em">😱</span>
-            <span class="lbl">Very High</span>
-          </button>
+          <button type="button" class="e-btn" data-val="1"><span class="em">😌</span><span class="lbl">None</span></button>
+          <button type="button" class="e-btn" data-val="2"><span class="em">😶</span><span class="lbl">Mild</span></button>
+          <button type="button" class="e-btn" data-val="3"><span class="em">😟</span><span class="lbl">Moderate</span></button>
+          <button type="button" class="e-btn" data-val="4"><span class="em">😰</span><span class="lbl">High</span></button>
+          <button type="button" class="e-btn" data-val="5"><span class="em">😱</span><span class="lbl">Very High</span></button>
         </div>
       </div>
 
       <div class="form-group">
         <label>Energy Level</label>
         <div class="emoji-scale" data-field="energy">
-          <button type="button" class="e-btn" data-val="1">
-            <span class="em">🪫</span>
-            <span class="lbl">Empty</span>
-          </button>
-          <button type="button" class="e-btn" data-val="2">
-            <span class="em">😴</span>
-            <span class="lbl">Low</span>
-          </button>
-          <button type="button" class="e-btn" data-val="3">
-            <span class="em">🚶</span>
-            <span class="lbl">Okay</span>
-          </button>
-          <button type="button" class="e-btn" data-val="4">
-            <span class="em">🏃</span>
-            <span class="lbl">Good</span>
-          </button>
-          <button type="button" class="e-btn" data-val="5">
-            <span class="em">⚡</span>
-            <span class="lbl">Energized</span>
-          </button>
+          <button type="button" class="e-btn" data-val="1"><span class="em">🪫</span><span class="lbl">Empty</span></button>
+          <button type="button" class="e-btn" data-val="2"><span class="em">😴</span><span class="lbl">Low</span></button>
+          <button type="button" class="e-btn" data-val="3"><span class="em">🚶</span><span class="lbl">Okay</span></button>
+          <button type="button" class="e-btn" data-val="4"><span class="em">🏃</span><span class="lbl">Good</span></button>
+          <button type="button" class="e-btn" data-val="5"><span class="em">⚡</span><span class="lbl">Energized</span></button>
         </div>
       </div>
 
       <div class="form-group">
         <label>Sleep Quality</label>
         <div class="emoji-scale" data-field="sleep_quality">
-          <button type="button" class="e-btn" data-val="1">
-            <span class="em">😩</span>
-            <span class="lbl">Terrible</span>
-          </button>
-          <button type="button" class="e-btn" data-val="2">
-            <span class="em">😪</span>
-            <span class="lbl">Poor</span>
-          </button>
-          <button type="button" class="e-btn" data-val="3">
-            <span class="em">😶</span>
-            <span class="lbl">Fair</span>
-          </button>
-          <button type="button" class="e-btn" data-val="4">
-            <span class="em">😌</span>
-            <span class="lbl">Good</span>
-          </button>
-          <button type="button" class="e-btn" data-val="5">
-            <span class="em">😴</span>
-            <span class="lbl">Great</span>
-          </button>
+          <button type="button" class="e-btn" data-val="1"><span class="em">😩</span><span class="lbl">Terrible</span></button>
+          <button type="button" class="e-btn" data-val="2"><span class="em">😪</span><span class="lbl">Poor</span></button>
+          <button type="button" class="e-btn" data-val="3"><span class="em">😶</span><span class="lbl">Fair</span></button>
+          <button type="button" class="e-btn" data-val="4"><span class="em">😌</span><span class="lbl">Good</span></button>
+          <button type="button" class="e-btn" data-val="5"><span class="em">😴</span><span class="lbl">Great</span></button>
         </div>
       </div>
 
@@ -155,6 +225,95 @@
         </textarea>
       </div>
 
+      <!-- ✅ Privacy settings -->
+      <div class="privacy-section">
+        <div class="privacy-header">
+          <span>🔒 Privacy settings</span>
+          <span class="privacy-sub">You decide what your partner can see. You can change this anytime.</span>
+        </div>
+
+        <div class="privacy-list">
+          <label class="privacy-item">
+            <input type="checkbox" id="pv_scores">
+            <div>
+              <div class="title">Share check-in scores</div>
+              <div class="desc">Mood, anxiety, energy, sleep ratings</div>
+            </div>
+          </label>
+
+          <label class="privacy-item">
+            <input type="checkbox" id="pv_notes">
+            <div>
+              <div class="title">Share notes</div>
+              <div class="desc">The text you type above (“Anything your partner should know?”)</div>
+            </div>
+          </label>
+
+          <label class="privacy-item">
+            <input type="checkbox" id="pv_ml">
+            <div>
+              <div class="title">Share ML insights</div>
+              <div class="desc">Trends, flags, patterns, and support-needed score</div>
+            </div>
+          </label>
+
+          <label class="privacy-item">
+            <input type="checkbox" id="pv_playbook">
+            <div>
+              <div class="title">Share today’s guidance</div>
+              <div class="desc">The action plan your partner sees on their dashboard</div>
+            </div>
+          </label>
+
+          <label class="privacy-item">
+            <input type="checkbox" id="pv_weekly">
+            <div>
+              <div class="title">Share weekly report</div>
+              <div class="desc">A weekly summary and action plan</div>
+            </div>
+          </label>
+
+          <label class="privacy-item">
+            <input type="checkbox" id="pv_silence">
+            <div>
+              <div class="title">Allow silence alerts</div>
+              <div class="desc">If you don’t check in for 2+ days, your partner gets a gentle alert</div>
+            </div>
+          </label>
+        </div>
+
+        <div class="privacy-actions">
+          <button type="button" class="privacy-save-btn" id="savePrivacyBtn">Save privacy settings</button>
+          <span class="privacy-saved" id="privacySavedMsg">Saved ✅</span>
+        </div>
+      </div>
+
+      <!-- VitalLens Scanner -->
+      <div class="vitals-section">
+        <div class="vitals-header">
+          <span>📷 Scan your vitals</span>
+          <span class="vitals-sub">Optional — 30-second camera scan for heart rate & breathing</span>
+        </div>
+
+        <div id="vitals-result" class="vitals-result hidden">
+          <div class="vital-pill" id="hr-pill">❤️ HR: —</div>
+          <div class="vital-pill" id="rr-pill">🫁 Breathing: —</div>
+          <div class="vital-pill" id="hrv-pill">📊 HRV: —</div>
+        </div>
+
+        <button type="button" class="scan-btn" id="scan-btn" onclick="startScan()">
+          📷 Scan Vitals
+        </button>
+
+        <div id="scanner-container" class="hidden">
+          <vitallens-vitals-scan
+            id="vl-scanner"
+            method="pos"
+            api-key="cBF3KKhUiK1fKJmYST6JW9v6sxFpkPpY5elywPcr"
+          ></vitallens-vitals-scan>
+        </div>
+      </div>
+
       <button type="submit" class="submit-btn">
         Send to My Partner 💌
       </button>
@@ -166,7 +325,7 @@
       <span class="success-icon">💌</span>
       <h3>Your partner knows</h3>
       <p>
-        They'll see your check-in and get personalised 
+        They'll see your check-in and get personalised
         guidance on how to show up for you today.
       </p>
       <button onclick="resetForm()" class="reset-btn">
@@ -178,34 +337,110 @@
 </div>
 
 <script>
+  // ── Date setup ────────────────────────────────
   const today = new Date(
-  new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+    new Date().getTime() - new Date().getTimezoneOffset() * 60000
+  ).toISOString().slice(0, 10);
   document.getElementById("date").value = today;
   document.getElementById("date").max   = today;
   document.getElementById("date").min   = today;
 
-  const vals = {
-    mood: null,
-    anxiety: null,
-    energy: null,
-    sleep_quality: null
-  };
+  // ── Emoji selections ──────────────────────────
+  const vals = { mood: null, anxiety: null, energy: null, sleep_quality: null };
 
-  // Emoji selection
   document.querySelectorAll('.emoji-scale').forEach(scale => {
     scale.querySelectorAll('.e-btn').forEach(btn => {
       btn.addEventListener('click', () => {
-        scale.querySelectorAll('.e-btn')
-             .forEach(b => b.classList.remove('selected'));
+        scale.querySelectorAll('.e-btn').forEach(b => b.classList.remove('selected'));
         btn.classList.add('selected');
         vals[scale.dataset.field] = parseInt(btn.dataset.val);
       });
     });
   });
 
-  // Form submit
-  document.getElementById('checkin-form')
-          .addEventListener('submit', async e => {
+  // ── VitalLens ─────────────────────────────────
+  window.scannedVitals = { heart_rate: null, hrv: null, breathing_rate: null };
+
+  function startScan() {
+    document.getElementById('scanner-container').classList.remove('hidden');
+    document.getElementById('scan-btn').textContent = '⏳ Scanning… stay still';
+    document.getElementById('scan-btn').disabled = true;
+
+    const scanner = document.getElementById('vl-scanner');
+
+    scanner.addEventListener('vitals', (e) => {
+      const v = e.detail?.vital_signs || e.detail;
+      if (!v) return;
+
+      const hr  = v.heart_rate?.value;
+      const rr  = v.respiratory_rate?.value;
+      const hrv = v.hrv_sdnn?.value;
+
+      window.scannedVitals.heart_rate    = hr  ? Math.round(hr)  : null;
+      window.scannedVitals.breathing_rate = rr ? Math.round(rr)  : null;
+      window.scannedVitals.hrv           = hrv ? Math.round(hrv) : null;
+
+      document.getElementById('hr-pill').textContent  = hr  ? `❤️ HR: ${Math.round(hr)} bpm`   : '❤️ HR: —';
+      document.getElementById('rr-pill').textContent  = rr  ? `🫁 Breathing: ${Math.round(rr)} rpm` : '🫁 Breathing: —';
+      document.getElementById('hrv-pill').textContent = hrv ? `📊 HRV: ${Math.round(hrv)} ms`  : '📊 HRV: —';
+
+      document.getElementById('vitals-result').classList.remove('hidden');
+      document.getElementById('scanner-container').classList.add('hidden');
+      document.getElementById('scan-btn').textContent = '✓ Vitals captured — rescan?';
+      document.getElementById('scan-btn').disabled = false;
+    });
+
+    scanner.addEventListener('error', () => {
+      document.getElementById('scanner-container').classList.add('hidden');
+      document.getElementById('scan-btn').textContent = '📷 Scan failed — try again';
+      document.getElementById('scan-btn').disabled = false;
+    });
+  }
+
+  // ✅ Privacy: load + save settings
+  async function loadPrivacy() {
+    try {
+      const res = await fetch('/api/privacy');
+      const data = await res.json();
+      const pv = (data && data.partner_view) ? data.partner_view : {};
+
+      document.getElementById("pv_scores").checked  = (pv.checkin_scores !== undefined) ? !!pv.checkin_scores : true;
+      document.getElementById("pv_notes").checked   = (pv.notes !== undefined) ? !!pv.notes : false;
+      document.getElementById("pv_ml").checked      = (pv.ml_insights !== undefined) ? !!pv.ml_insights : true;
+      document.getElementById("pv_playbook").checked= (pv.playbook !== undefined) ? !!pv.playbook : true;
+      document.getElementById("pv_weekly").checked  = (pv.weekly !== undefined) ? !!pv.weekly : true;
+      document.getElementById("pv_silence").checked = (pv.silence_alert !== undefined) ? !!pv.silence_alert : true;
+    } catch (e) {
+      // If privacy fetch fails, keep defaults checked
+    }
+  }
+
+  async function savePrivacy() {
+    const partner_view = {
+      checkin_scores: document.getElementById("pv_scores").checked,
+      notes: document.getElementById("pv_notes").checked,
+      ml_insights: document.getElementById("pv_ml").checked,
+      playbook: document.getElementById("pv_playbook").checked,
+      weekly: document.getElementById("pv_weekly").checked,
+      silence_alert: document.getElementById("pv_silence").checked
+    };
+
+    await fetch('/api/privacy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ partner_view })
+    });
+
+    const msg = document.getElementById('privacySavedMsg');
+    msg.style.display = 'inline';
+    setTimeout(() => msg.style.display = 'none', 1500);
+  }
+
+  document.getElementById("savePrivacyBtn").addEventListener("click", savePrivacy);
+  loadPrivacy();
+
+  // ── Form submit ───────────────────────────────
+  document.getElementById('checkin-form').addEventListener('submit', async e => {
     e.preventDefault();
 
     if (Object.values(vals).some(v => v === null)) {
@@ -214,11 +449,14 @@
     }
 
     await fetch('/api/checkin', {
-      method: 'POST',
+      method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        date:  document.getElementById('date').value,
-        notes: document.getElementById('notes').value,
+        date:          document.getElementById('date').value,
+        notes:         document.getElementById('notes').value,
+        heart_rate:    window.scannedVitals.heart_rate,
+        hrv:           window.scannedVitals.hrv,
+        breathing_rate: window.scannedVitals.breathing_rate,
         ...vals
       })
     });
@@ -227,19 +465,23 @@
     document.getElementById('success').classList.remove('hidden');
   });
 
-  // Reset form for another day
+  // ── Reset ─────────────────────────────────────
   function resetForm() {
     document.getElementById('checkin-form').classList.remove('hidden');
     document.getElementById('success').classList.add('hidden');
-    document.querySelectorAll('.e-btn')
-            .forEach(b => b.classList.remove('selected'));
+    document.querySelectorAll('.e-btn').forEach(b => b.classList.remove('selected'));
     document.getElementById('notes').value = '';
-    const today = new Date(
-    new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
-    document.getElementById('date').value = today;
-    document.getElementById('date').max   = today;
-    document.getElementById('date').min   = today;
+    const t = new Date(
+      new Date().getTime() - new Date().getTimezoneOffset() * 60000
+    ).toISOString().slice(0, 10);
+    document.getElementById('date').value = t;
+    document.getElementById('date').max   = t;
+    document.getElementById('date').min   = t;
     Object.keys(vals).forEach(k => vals[k] = null);
+    window.scannedVitals = { heart_rate: null, hrv: null, breathing_rate: null };
+    document.getElementById('vitals-result').classList.add('hidden');
+    document.getElementById('scan-btn').textContent = '📷 Scan Vitals';
+    document.getElementById('scan-btn').disabled = false;
   }
 </script>
 

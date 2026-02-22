@@ -105,7 +105,59 @@ def get_checkins():
         .order("date", desc=True)\
         .limit(60)\
         .execute()
-    return jsonify(result.data)
+
+    rows = result.data or []
+
+    # If partner is viewing, enforce mom's privacy settings
+    if session.get("role") == "partner":
+        default_partner_view = {
+            "checkin_scores": True,
+            "notes": False,
+            "ml_insights": True,
+            "playbook": True,
+            "weekly": True,
+            "silence_alert": True
+        }
+
+        # fetch partner_view from privacy_settings
+        pv = default_partner_view
+        try:
+            r = supabase.table("privacy_settings")\
+                .select("partner_view")\
+                .eq("id", mom_id)\
+                .limit(1)\
+                .execute()
+            if r.data and r.data[0].get("partner_view"):
+                pv = r.data[0]["partner_view"]
+                if isinstance(pv, str):
+                    try:
+                        pv = json.loads(pv)
+                    except:
+                        pv = default_partner_view
+                for k, v in default_partner_view.items():
+                    pv.setdefault(k, v)
+        except:
+            pv = default_partner_view
+
+        # Redact notes if not allowed
+        if not pv.get("notes", False):
+            for row in rows:
+                row["notes"] = ""
+
+        # Redact scores (and vitals) if not allowed
+        if not pv.get("checkin_scores", True):
+            for row in rows:
+                row["mood"] = None
+                row["anxiety"] = None
+                row["energy"] = None
+                row["sleep_quality"] = None
+
+                # recommended: also hide vitals if scores are hidden
+                row["heart_rate"] = None
+                row["hrv"] = None
+                row["breathing_rate"] = None
+
+    return jsonify(rows)
 
 # ── Partner APIs ───────────────────────────────────────────
 
@@ -144,22 +196,55 @@ def get_observations():
 
 @app.route("/api/privacy", methods=["POST"])
 def save_privacy():
-    d = request.json
+    d = request.json or {}
     mom_id = get_mom_id()
+
+    if not mom_id:
+        return jsonify({"error": "Not logged in"}), 401
+
+    default_partner_view = {
+        "checkin_scores": True,
+        "notes": False,
+        "ml_insights": True,
+        "playbook": True,
+        "weekly": True,
+        "silence_alert": True
+    }
+
+    partner_view = d.get("partner_view", default_partner_view)
+    # make sure all keys exist
+    for k, v in default_partner_view.items():
+        partner_view.setdefault(k, v)
 
     supabase.table("privacy_settings").upsert({
         "id":            mom_id,
         "sharing_level": d.get("sharing_level", "full"),
-        "share_weekly":  d.get("share_weekly", 1)
+        "share_weekly":  d.get("share_weekly", 1),
+        "partner_view":  partner_view
     }).execute()
+
     return jsonify({"success": True})
+
 
 @app.route("/api/privacy")
 def get_privacy():
     mom_id = get_mom_id()
 
+    default_partner_view = {
+        "checkin_scores": True,
+        "notes": False,
+        "ml_insights": True,
+        "playbook": True,
+        "weekly": True,
+        "silence_alert": True
+    }
+
     if not mom_id:
-        return jsonify({"sharing_level": "full", "share_weekly": 1})
+        return jsonify({
+            "sharing_level": "full",
+            "share_weekly": 1,
+            "partner_view": default_partner_view
+        })
 
     result = supabase.table("privacy_settings")\
         .select("*")\
@@ -168,9 +253,30 @@ def get_privacy():
         .execute()
 
     if result.data:
-        return jsonify(result.data[0])
-    return jsonify({"sharing_level": "full", "share_weekly": 1})
+        row = result.data[0]
+        pv = row.get("partner_view") or default_partner_view
 
+        # sometimes jsonb comes back as a string depending on client/config
+        if isinstance(pv, str):
+            try:
+                pv = json.loads(pv)
+            except:
+                pv = default_partner_view
+
+        for k, v in default_partner_view.items():
+            pv.setdefault(k, v)
+
+        return jsonify({
+            "sharing_level": row.get("sharing_level", "full"),
+            "share_weekly": row.get("share_weekly", 1),
+            "partner_view": pv
+        })
+
+    return jsonify({
+        "sharing_level": "full",
+        "share_weekly": 1,
+        "partner_view": default_partner_view
+    })
 # ── Silence detection ──────────────────────────────────────
 
 @app.route("/api/misseddays")
@@ -210,6 +316,57 @@ def get_digest():
     if not mom_id:
         return jsonify({"ready": False, "message": "Not logged in"})
 
+    # ---- Privacy defaults ----
+    default_partner_view = {
+        "checkin_scores": True,
+        "notes": False,
+        "ml_insights": True,
+        "playbook": True,
+        "weekly": True,
+        "silence_alert": True
+    }
+
+    def get_partner_view(mid):
+        try:
+            r = supabase.table("privacy_settings")\
+                .select("partner_view")\
+                .eq("id", mid)\
+                .limit(1)\
+                .execute()
+            if r.data and r.data[0].get("partner_view"):
+                pv = r.data[0]["partner_view"]
+                if isinstance(pv, str):
+                    try:
+                        pv = json.loads(pv)
+                    except:
+                        pv = default_partner_view
+                for k, v in default_partner_view.items():
+                    pv.setdefault(k, v)
+                return pv
+        except:
+            pass
+        return default_partner_view
+
+    is_partner = (session.get("role") == "partner")
+    pv = get_partner_view(mom_id) if is_partner else default_partner_view
+
+    # If mom hides playbook from partner, don't call Gemini
+    if is_partner and not pv.get("playbook", True):
+        return jsonify({
+            "ready": True,
+            "playbook": {
+                "summary": "She chose to keep today’s guidance private.",
+                "action_2min": "Check in gently and offer one concrete option (water/snack/quiet).",
+                "action_15min": "Take one task off her plate without asking (dishes, laundry, baby for 15 mins).",
+                "action_60min": "Create a protected rest window for her while you handle everything else.",
+                "avoid": "Avoid minimizing her feelings (“it’s not that bad”). It can feel dismissive.",
+                "conversation_starter": "“What would feel even 1% easier right now?”",
+                "ready_to_send": "Hey love, no pressure to reply. I’m here. Want water, a snack, or quiet time? ❤️"
+            },
+            "analysis": {}  # keep private
+        })
+
+    # ---- Fetch data ----
     rows = supabase.table("checkins")\
         .select("*")\
         .eq("user_id", mom_id)\
@@ -272,6 +429,7 @@ def get_digest():
             "message":    "Not enough data yet — encourage daily check-ins"
         })
 
+    # ---- Observations text (partner wrote these, ok to include) ----
     obs_text = ""
     if obs:
         lines = []
@@ -294,16 +452,17 @@ def get_digest():
         "unknown":       "Postpartum stage unknown."
     }.get(analysis["phase"], "")
 
+    # ✅ IMPORTANT: Always give Gemini the full ML context (even if mom hides it from partner UI)
     prompt = f"""
 You are a postpartum support guide writing to a partner.
 Be warm, specific, and actionable. Never generic.
+
 Pronouns / audience rules (STRICT):
 - Address the partner as "you".
 - Refer to the mom as "she/her" or "your partner".
 - NEVER address the mom directly as "you" (no "you're feeling...", no "you need...").
 - The only place "you" can refer to the mom is inside the "ready_to_send" text message (because that message is from partner to mom).
 
-Be warm, specific, and actionable. Never generic.
 Never diagnose. Don't say "she has PPD". Say "she may be having a harder time".
 
 ML ANALYSIS:
@@ -329,7 +488,7 @@ Return ONLY a valid JSON object, no markdown, no explanation:
   "avoid": "One specific thing NOT to say or do and exactly why",
   "conversation_starter": "One gentle open question to ask her",
   "ready_to_send": "Exact text message they can copy and send to her",
-  "summary": "Two sentences about how she is doing this week"
+  "summary": "Two sentences about how she is doing this week (must use she/her)"
 }}
 
 Rules:
@@ -340,7 +499,10 @@ Rules:
 """
 
     try:
-        response = gemini.models.generate_content(model="gemini-2.5-flash-lite",contents=prompt)
+        response = gemini.models.generate_content(
+            model="gemini-2.5-flash-lite",
+            contents=prompt
+        )
         text = response.text.strip()
         if text.startswith("```"):
             text = text.split("```")[1]
@@ -348,27 +510,37 @@ Rules:
                 text = text[4:]
         playbook = json.loads(text.strip())
 
+        # ---- Build privacy-filtered analysis payload for partner UI ----
+        analysis_payload = {"confidence": analysis.get("confidence", {})}
+
+        if (not is_partner) or pv.get("ml_insights", True):
+            analysis_payload.update({
+                "severity": analysis["severity"],
+                "level":    analysis["level"],
+                "trends":   analysis["trends"],
+                "clusters": analysis["clusters"],
+                "flags":    analysis["flags"],
+                "reasons":  analysis["reasons"],
+                "weeks":    analysis["weeks"],
+                "phase":    analysis["phase"],
+            })
+
+            # If mom hides checkin_scores, remove the averages from UI only
+            if (not is_partner) or pv.get("checkin_scores", True):
+                analysis_payload["stats"] = analysis["stats"]
+        else:
+            # Partner should not see ML insights panel
+            analysis_payload = {"confidence": analysis.get("confidence", {})}
+
         return jsonify({
-            "ready":    True,
+            "ready": True,
             "playbook": playbook,
-            "analysis": {
-                "severity":   analysis["severity"],
-                "level":      analysis["level"],
-                "trends":     analysis["trends"],
-                "clusters":   analysis["clusters"],
-                "flags":      analysis["flags"],
-                "reasons":    analysis["reasons"],
-                "confidence": analysis["confidence"],
-                "weeks":      analysis["weeks"],
-                "phase":      analysis["phase"],
-                "stats":      analysis["stats"],
-            }
+            "analysis": analysis_payload
         })
 
     except Exception as e:
         return jsonify({"ready": False, "message": f"AI error: {str(e)}"})
-
-
+    
 @app.route("/api/chat", methods=["POST"])
 def chat_api():
     mom_id   = get_mom_id()
@@ -544,6 +716,20 @@ def signup():
                 "name":         d.get("name", ""),
                 "baby_dob":     d.get("baby_dob"),
                 "partner_code": code
+            }).execute()
+
+            supabase.table("privacy_settings").upsert({
+                "id": user_id,
+                "sharing_level": "full",
+                "share_weekly": 1,
+                "partner_view": {
+                    "checkin_scores": True,
+                    "notes": False,
+                    "ml_insights": True,
+                    "playbook": True,
+                    "weekly": True,
+                    "silence_alert": True
+                }
             }).execute()
 
             session["user_id"]  = user_id
