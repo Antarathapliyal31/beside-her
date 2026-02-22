@@ -1,3 +1,9 @@
+# Patch imghdr — removed in Python 3.13, needed by vitallens
+import sys, types
+if 'imghdr' not in sys.modules:
+    _m = types.ModuleType('imghdr')
+    _m.what = lambda file, h=None: None
+    sys.modules['imghdr'] = _m
 from flask import Flask, render_template, request, jsonify, session
 from supabase import create_client
 from dotenv import load_dotenv
