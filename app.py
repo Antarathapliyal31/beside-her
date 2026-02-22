@@ -5,7 +5,7 @@ import os
 import json
 import secrets
 from datetime import datetime, date
-
+import httpx
 from google import genai
 from mlanalysis import run_full_analysis as run_analysis
 
@@ -870,6 +870,26 @@ def get_profile():
     if result.data:
         return jsonify(result.data[0])
     return jsonify({"error": "Profile not found"})
+
+
+
+@app.route("/api/vitallens-proxy", methods=["POST"])
+def vitallens_proxy():
+    api_key = os.getenv("VITALLENS_API_KEY")
+    data = request.get_data()
+    headers = {
+        "Content-Type": request.content_type,
+        "x-api-key": api_key
+    }
+    response = httpx.post(
+        "https://api.rouast.com/vitallens-v3/stream",
+        content=data,
+        headers=headers
+    )
+    return response.content, response.status_code, {
+        "Content-Type": response.headers.get("Content-Type", "application/json"),
+        "Access-Control-Allow-Origin": "*"
+    }
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5000)
