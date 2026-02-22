@@ -309,18 +309,100 @@
     }
   }
 
-  // ── AI digest (placeholder for now) ───────────
+ 
+// ── AI digest + ML stats ───────────────────────
   async function loadDigest() {
     document.getElementById('digest-text').innerHTML =
       '<p class="loading-text">Analysing her patterns...</p>';
 
-    // We will connect this to Gemini after ML is built
-    setTimeout(() => {
-      document.getElementById('digest-text').innerHTML = `
-        <p>🔧 AI guidance will appear here once the ML layer is connected.</p>
-        <p>For now you can see her check-in data in the charts below.</p>
-      `;
-    }, 1000);
+    const res  = await fetch('/api/digest');
+    const data = await res.json();
+
+    if (!data.ready) {
+      document.getElementById('digest-text').innerHTML =
+        `<p>${data.message || 'Not enough data yet — encourage her to log daily.'}</p>`;
+      return;
+    }
+
+    // ── Render ML stats card ──
+    const a = data.analysis;
+    document.getElementById('stats-card').classList.remove('hidden');
+
+    const levelColors = {
+      green:  '#4caf50', yellow: '#f5a623',
+      orange: '#e87c2d', red:    '#e8734a'
+    };
+    const levelEmoji = {
+      green: '🟢', yellow: '🟡', orange: '🟠', red: '🔴'
+    };
+
+    document.getElementById('stat-severity').textContent =
+      `${a.severity}/10`;
+    document.getElementById('stat-severity').style.color =
+      levelColors[a.level] || '#333';
+
+    document.getElementById('stat-mood').textContent =
+      `${a.stats.mood.avg}/5 ${a.trends.mood_trend === 'worsening' ? '↓' : a.trends.mood_trend === 'improving' ? '↑' : '→'}`;
+
+    document.getElementById('stat-anxiety').textContent =
+      `${a.stats.anxiety.avg}/5 ${a.trends.anxiety_trend === 'worsening' ? '↑' : '→'}`;
+
+    document.getElementById('stat-pattern').textContent =
+      a.clusters.dominant || '—';
+
+    // Escalation badge
+    const confBadge = document.getElementById('conf-badge');
+    confBadge.textContent =
+      `${levelEmoji[a.level]} ${a.level.charAt(0).toUpperCase() + a.level.slice(1)}`;
+    confBadge.style.background = levelColors[a.level] + '22';
+    confBadge.style.color      = levelColors[a.level];
+
+    // Flags
+    const flagsDiv = document.getElementById('flags-list');
+    if (a.flags && a.flags.length) {
+      flagsDiv.innerHTML = a.flags.map(f =>
+        `<div class="flag-item flag-${f.level}">
+           ${f.level === 'urgent' ? '⚠️' : '🔔'} ${f.message}
+         </div>`
+      ).join('');
+    }
+
+    // ── Render Today's Playbook ──
+    const p = data.playbook;
+    document.getElementById('digest-text').innerHTML = `
+      <div class="summary-block">${p.summary}</div>
+
+      <div class="playbook-grid">
+        <div class="play-item">
+          <div class="play-time">⚡ 2 min</div>
+          <div class="play-action">${p.action_2min}</div>
+        </div>
+        <div class="play-item">
+          <div class="play-time">☕ 15 min</div>
+          <div class="play-action">${p.action_15min}</div>
+        </div>
+        <div class="play-item">
+          <div class="play-time">🕐 60 min</div>
+          <div class="play-action">${p.action_60min}</div>
+        </div>
+      </div>
+
+      <div class="avoid-block">
+        <strong>Avoid today:</strong> ${p.avoid}
+      </div>
+
+      <div class="convo-block">
+        <strong>Ask her:</strong> "${p.conversation_starter}"
+      </div>
+
+      <div class="text-block">
+        <strong>📱 Ready to send:</strong>
+        <div class="text-msg">${p.ready_to_send}</div>
+        <button class="copy-btn" onclick="navigator.clipboard.writeText('${p.ready_to_send.replace(/'/g,"\\'")}'); this.textContent='✓ Copied!'">
+          Copy message
+        </button>
+      </div>
+    `;
   }
 
   // ── Observation signals ────────────────────────

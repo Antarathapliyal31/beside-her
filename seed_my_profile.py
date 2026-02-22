@@ -9,7 +9,11 @@ supabase = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_KEY"))
 # ── PASTE YOUR USER ID HERE ──────────────────────────
 # Find it in Supabase Dashboard → Auth → Users
 # Or check mom_profile table after signing up
+<<<<<<< HEAD
 USER_ID = "2158f347-11c0-479d-beeb-b34d77b0240b"
+=======
+USER_ID = "ebeef525-335f-4b8a-bbe5-53e495128fe1"
+>>>>>>> 117f75927b4fc1bc4131b583484f53ed6e01ded3
 
 # ── Pick a story ─────────────────────────────────────
 # Maya's data — 40 days, worsening pattern

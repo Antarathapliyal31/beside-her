@@ -1098,3 +1098,100 @@ input[type="text"]:focus {
   border-color: var(--plum);
   background: white;
 }
+
+/* ── Playbook cards ─────────────────────────── */
+.summary-block {
+  font-size: 0.95rem;
+  color: var(--ink);
+  line-height: 1.7;
+  margin-bottom: 1.25rem;
+  padding: 1rem;
+  background: var(--cream);
+  border-radius: 12px;
+}
+
+.playbook-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+@media (max-width: 640px) {
+  .playbook-grid { grid-template-columns: 1fr; }
+}
+
+.play-item {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 0.9rem;
+}
+
+.play-time {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--plum);
+  margin-bottom: 0.4rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.play-action {
+  font-size: 0.88rem;
+  color: var(--ink);
+  line-height: 1.5;
+}
+
+.avoid-block, .convo-block {
+  font-size: 0.88rem;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  margin-bottom: 0.75rem;
+  line-height: 1.6;
+}
+
+.avoid-block {
+  background: #fff5f0;
+  border-left: 3px solid #e8734a;
+}
+
+.convo-block {
+  background: #f0f7ff;
+  border-left: 3px solid #7aabcf;
+}
+
+.text-block {
+  background: var(--cream);
+  border-radius: 12px;
+  padding: 1rem;
+  font-size: 0.88rem;
+}
+
+.text-msg {
+  margin: 0.5rem 0;
+  font-style: italic;
+  color: var(--ink);
+  line-height: 1.6;
+}
+
+.copy-btn {
+  background: var(--plum);
+  color: white;
+  border: none;
+  padding: 0.4rem 1rem;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.flag-item {
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  margin-bottom: 0.4rem;
+}
+
+.flag-warn   { background: #fff8e1; color: #b87c00; }
+.flag-urgent { background: #fff0f0; color: #c0392b; }
