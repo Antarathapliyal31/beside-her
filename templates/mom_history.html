@@ -397,7 +397,15 @@
           ${d.notes ? `<div class="log-note">"${d.notes}"</div>` : ''}
         </div>`).join('');
   }
-
+  // ── Adjust wording based on who is viewing ──
+const isPartnerView = window.location.pathname === '/report';
+if (isPartnerView) {
+  document.title = 'Beside Her – Her Journey';
+  document.querySelector('.journey-hero h2').textContent = 'Her Journey';
+  document.querySelector('.journey-hero p').textContent  = 
+    'A full picture of how she has been feeling.';
+  document.querySelector('.log-card h3').textContent = 'All Her Check-Ins';
+}
   loadHistory();
 </script>
 

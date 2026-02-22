@@ -43,6 +43,10 @@ def index():
 def mom():
     return render_template("mom_checkin.html")
 
+@app.route("/mom/history")
+def mom_history():
+    return render_template("mom_history.html")
+
 @app.route("/partner")
 def partner():
     return render_template("partner_dashboard.html")
@@ -53,7 +57,7 @@ def chat():
 
 @app.route("/report")
 def report():
-    return render_template("weekly_report.html")
+    return render_template("mom_history.html")
 
 @app.route("/signup")
 def signup_page():
@@ -466,6 +470,8 @@ def get_weekly():
         analysis["weeks"]    = ph.get("weeks", 0)
         analysis["phase"]    = ph.get("phase", "unknown")
         analysis["flags"]    = [{"message": f, "level": "warn"} for f in (analysis.get("flags") or {}).get("flags", [])]
+        analysis["trends"]   = {"mood_trend": (analysis.get("trends") or {}).get("mood", {}).get("trend", "stable")
+}
     else:
         analysis["ready"] = False
 
@@ -614,6 +620,11 @@ def login():
             session["user_id"] = user_id
             session["role"]    = "partner"
             session["mom_id"]  = partner.data[0]["linked_mom_id"]
+            mom_prof = supabase.table("mom_profile")\
+                .select("baby_dob")\
+                .eq("id", partner.data[0]["linked_mom_id"])\
+                .single().execute()
+            session["baby_dob"] = mom_prof.data["baby_dob"] if mom_prof.data else None
             return jsonify({"success": True, "redirect": "/partner"})
 
         return jsonify({"error": "Profile not found"})
