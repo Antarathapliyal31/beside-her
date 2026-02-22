@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Beside Her – My Profile</title>
+  <link rel="stylesheet" href="/static/css/style.css"/>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="logo">Beside <span>Her</span></a>
+  <div class="nav-links">
+    <a href="/mom">Check In</a>
+    <a href="/profile" class="active">Profile</a>
+  </div>
+</nav>
+
+<div class="page">
+  <div class="checkin-card">
+
+    <div class="checkin-header">
+      <div class="checkin-icon">👤</div>
+      <h2>My Profile</h2>
+      <p class="checkin-sub">Share your partner code so they can connect with you.</p>
+    </div>
+
+    <div id="profile-content">
+
+      <div style="background:#fdf5f0; border-radius:14px; padding:20px; margin-bottom:20px; border:1px solid #f0ddd0;">
+        <div style="font-size:0.78rem; text-transform:uppercase; letter-spacing:0.08em; color:#b09090; margin-bottom:8px;">Your Partner Code</div>
+        <div style="font-size:2rem; font-weight:800; color:#6b3f6b; letter-spacing:0.15em;" id="partner-code">—</div>
+        <div style="font-size:0.85rem; color:#aaa; margin-top:6px;">Share this code with your partner during their signup</div>
+        <button onclick="copyCode()" style="margin-top:14px; background:#6b3f6b; color:#fff; border:none; border-radius:8px; padding:9px 20px; font-size:0.88rem; cursor:pointer; font-family:inherit;" id="copy-btn">
+          Copy Code
+        </button>
+      </div>
+
+      <div style="background:#fff; border-radius:14px; padding:20px; border:1px solid #f0e8e0;">
+        <div style="font-size:0.78rem; text-transform:uppercase; letter-spacing:0.08em; color:#b09090; margin-bottom:14px;">Your Details</div>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          <div>
+            <span style="font-size:0.85rem; color:#aaa;">Name</span>
+            <div style="font-size:1rem; color:#2d1f1f; font-weight:600;" id="profile-name">—</div>
+          </div>
+          <div>
+            <span style="font-size:0.85rem; color:#aaa;">Baby's date of birth</span>
+            <div style="font-size:1rem; color:#2d1f1f; font-weight:600;" id="profile-dob">—</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>
+
+<script>
+  async function loadProfile() {
+    const res  = await fetch('/api/profile');
+    const data = await res.json();
+
+    if (data.error) return;
+
+    document.getElementById('partner-code').textContent = data.partner_code || '—';
+    document.getElementById('profile-name').textContent = data.name || '—';
+    document.getElementById('profile-dob').textContent  = data.baby_dob || '—';
+  }
+
+  function copyCode() {
+    const code = document.getElementById('partner-code').textContent;
+    navigator.clipboard.writeText(code);
+    document.getElementById('copy-btn').textContent = '✓ Copied!';
+    setTimeout(() => {
+      document.getElementById('copy-btn').textContent = 'Copy Code';
+    }, 2000);
+  }
+
+  loadProfile();
+</script>
+
+</body>
+</html>

@@ -852,5 +852,24 @@ def logout():
     supabase.auth.sign_out()
     return jsonify({"success": True})
 
+@app.route("/profile")
+def profile():
+    return render_template("mom_profile.html")
+
+@app.route("/api/profile")
+def get_profile():
+    user_id = session.get("user_id")
+    if not user_id:
+        return jsonify({"error": "Not logged in"})
+    
+    result = supabase.table("mom_profile")\
+        .select("*")\
+        .eq("id", user_id)\
+        .execute()
+    
+    if result.data:
+        return jsonify(result.data[0])
+    return jsonify({"error": "Profile not found"})
+
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5000)
