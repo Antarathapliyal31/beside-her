@@ -289,7 +289,7 @@
         </div>
       </div>
 
-      <!-- Vitals Scanner (server-side pos, no API key) -->
+      <!-- Vitals Scanner (pure JS rPPG — no server, no API) -->
       <div class="vitals-section">
         <div class="vitals-header">
           <span>Scan your vitals</span>
@@ -304,16 +304,20 @@
           Scan Vitals
         </button>
 
-        <!-- Live camera preview + countdown -->
+        <!-- Live camera preview + signal graph -->
         <div id="scanner-container" style="display:none; margin-top:14px; text-align:center;">
           <video id="cam-preview" autoplay muted playsinline
-            style="width:100%; max-width:320px; border-radius:12px; background:#000;"></video>
+            style="width:100%; max-width:280px; border-radius:12px; background:#000;"></video>
+          <canvas id="cam-canvas" style="display:none;"></canvas>
+          <canvas id="signal-graph" width="280" height="60"
+            style="width:100%; max-width:280px; border-radius:8px; background:rgba(45,143,143,0.06);
+                   border:1px solid rgba(45,143,143,0.2); margin-top:8px; display:block; margin:8px auto 0;"></canvas>
           <div id="scan-countdown"
             style="margin-top:8px; font-size:1.1rem; font-weight:600; color:var(--teal);">
             Hold still — 30s
           </div>
-          <div style="font-size:0.78rem; color:var(--muted); margin-top:4px;">
-            Face the camera in good lighting
+          <div style="font-size:0.78rem; color:var(--muted); margin-top:2px;">
+            Face camera in good lighting · keep still
           </div>
         </div>
       </div>
@@ -362,88 +366,136 @@
     });
   });
 
-  // ── Vitals scan (MediaRecorder → Flask → VitalLens pos) ──────
+  // ── Vitals scan (pure JS rPPG — no server, no API) ────────────
   window.scannedVitals = { heart_rate: null, hrv: null, breathing_rate: null };
-  let mediaRecorder = null, mediaStream = null;
+  let rppgStream = null, rppgTimer = null, rppgRAF = null;
 
   async function startScan() {
     const btn       = document.getElementById('scan-btn');
     const container = document.getElementById('scanner-container');
     const preview   = document.getElementById('cam-preview');
+    const canvas    = document.getElementById('cam-canvas');
+    const graph     = document.getElementById('signal-graph');
     const countdown = document.getElementById('scan-countdown');
+    const ctx       = canvas.getContext('2d');
+    const gctx      = graph.getContext('2d');
 
     btn.disabled = true;
     btn.textContent = 'Starting camera…';
 
     try {
-      mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      rppgStream = await navigator.mediaDevices.getUserMedia({
+        video: { width: 320, height: 240, facingMode: 'user' }, audio: false
+      });
     } catch (err) {
       btn.disabled = false;
       btn.textContent = 'Camera access denied — try again';
       return;
     }
 
-    preview.srcObject = mediaStream;
+    preview.srcObject = rppgStream;
+    await new Promise(r => preview.onloadedmetadata = r);
+    canvas.width  = preview.videoWidth  || 320;
+    canvas.height = preview.videoHeight || 240;
     container.style.display = 'block';
     btn.textContent = 'Scanning…';
 
-    // Record 30 seconds
-    const chunks = [];
-    const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp8')
-      ? 'video/webm;codecs=vp8' : 'video/webm';
-    mediaRecorder = new MediaRecorder(mediaStream, { mimeType });
-    mediaRecorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+    // ── Sample green channel at ~30fps ──
+    const DURATION = 30;      // seconds
+    const greenSamples = [];  // raw green means
+    const graphBuf = [];      // smoothed for display
 
-    mediaRecorder.onstop = async () => {
-      // Stop camera
-      mediaStream.getTracks().forEach(t => t.stop());
-      container.style.display = 'none';
-      btn.textContent = 'Analysing…';
+    function sampleFrame() {
+      ctx.drawImage(preview, 0, 0, canvas.width, canvas.height);
+      // Sample central face region (middle 40% of frame)
+      const rx = Math.floor(canvas.width  * 0.3);
+      const ry = Math.floor(canvas.height * 0.2);
+      const rw = Math.floor(canvas.width  * 0.4);
+      const rh = Math.floor(canvas.height * 0.6);
+      const pixels = ctx.getImageData(rx, ry, rw, rh).data;
+      let g = 0;
+      const n = pixels.length / 4;
+      for (let i = 0; i < pixels.length; i += 4) g += pixels[i + 1];
+      greenSamples.push(g / n);
 
-      const blob = new Blob(chunks, { type: mimeType });
-      const formData = new FormData();
-      formData.append('video', blob, 'scan.webm');
+      // ── Draw live signal graph ──
+      const last = greenSamples[greenSamples.length - 1];
+      graphBuf.push(last);
+      if (graphBuf.length > 140) graphBuf.shift();
+      const mn = Math.min(...graphBuf), mx = Math.max(...graphBuf);
+      const range = mx - mn || 1;
+      gctx.clearRect(0, 0, graph.width, graph.height);
+      gctx.beginPath();
+      gctx.strokeStyle = 'rgba(45,143,143,0.85)';
+      gctx.lineWidth = 1.5;
+      graphBuf.forEach((v, i) => {
+        const x = (i / (graphBuf.length - 1)) * graph.width;
+        const y = graph.height - ((v - mn) / range) * (graph.height - 8) - 4;
+        i === 0 ? gctx.moveTo(x, y) : gctx.lineTo(x, y);
+      });
+      gctx.stroke();
 
-      try {
-        const res  = await fetch('/api/scan-vitals', { method: 'POST', body: formData });
-        const data = await res.json();
+      rppgRAF = requestAnimationFrame(sampleFrame);
+    }
+    rppgRAF = requestAnimationFrame(sampleFrame);
 
-        if (data.error) {
-          btn.textContent = 'Scan failed — ' + data.error;
-          btn.disabled = false;
-          return;
-        }
-
-        window.scannedVitals.heart_rate    = data.heart_rate;
-        window.scannedVitals.hrv           = data.hrv;
-        window.scannedVitals.breathing_rate = data.breathing_rate;
-
-        document.getElementById('hr-pill').textContent =
-          data.heart_rate ? `HR: ${data.heart_rate} bpm` : 'HR: —';
-
-        document.getElementById('vitals-result').classList.remove('hidden');
-        btn.textContent = 'Vitals captured — rescan?';
-        btn.disabled = false;
-
-      } catch (err) {
-        btn.textContent = 'Scan failed — try again';
-        btn.disabled = false;
-      }
-    };
-
-    // Countdown 30s then stop
-    let secs = 30;
+    // ── Countdown ──
+    let secs = DURATION;
     countdown.textContent = `Hold still — ${secs}s`;
-    mediaRecorder.start();
-
-    const timer = setInterval(() => {
+    rppgTimer = setInterval(() => {
       secs--;
-      countdown.textContent = secs > 0 ? `Hold still — ${secs}s` : 'Processing…';
+      countdown.textContent = secs > 0 ? `Hold still — ${secs}s` : 'Calculating…';
       if (secs <= 0) {
-        clearInterval(timer);
-        mediaRecorder.stop();
+        clearInterval(rppgTimer);
+        cancelAnimationFrame(rppgRAF);
+        rppgStream.getTracks().forEach(t => t.stop());
+        container.style.display = 'none';
+        const bpm = calcBPM(greenSamples, 30);
+        window.scannedVitals.heart_rate = bpm;
+        document.getElementById('hr-pill').textContent = bpm ? `HR: ${bpm} bpm` : 'HR: unclear — try again';
+        document.getElementById('vitals-result').classList.remove('hidden');
+        btn.textContent = bpm ? 'Vitals captured — rescan?' : 'Rescan in better lighting';
+        btn.disabled = false;
       }
     }, 1000);
+  }
+
+  // ── rPPG: bandpass + autocorrelation BPM ──────────────────────
+  function calcBPM(signal, fps) {
+    if (signal.length < fps * 5) return null;
+
+    // 1. Detrend — subtract linear trend
+    const n = signal.length;
+    const mean = signal.reduce((a, b) => a + b, 0) / n;
+    const detrended = signal.map(v => v - mean);
+
+    // 2. Bandpass filter (0.7–3.5 Hz = 42–210 BPM) via moving average difference
+    const lo = Math.round(fps / 3.5); // high-freq window
+    const hi = Math.round(fps / 0.7); // low-freq window
+    function movAvg(arr, w) {
+      return arr.map((_, i) => {
+        const s = Math.max(0, i - w), e = Math.min(arr.length, i + w);
+        return arr.slice(s, e).reduce((a, b) => a + b, 0) / (e - s);
+      });
+    }
+    const filtered = detrended.map((v, i) => movAvg(detrended, lo)[i] - movAvg(detrended, hi)[i]);
+
+    // 3. Autocorrelation to find dominant period
+    const minLag = Math.round(fps * 60 / 210); // 210 BPM max
+    const maxLag = Math.round(fps * 60 / 42);  // 42  BPM min
+    let bestLag = minLag, bestCorr = -Infinity;
+
+    for (let lag = minLag; lag <= maxLag; lag++) {
+      let corr = 0;
+      for (let i = 0; i < filtered.length - lag; i++) {
+        corr += filtered[i] * filtered[i + lag];
+      }
+      if (corr > bestCorr) { bestCorr = corr; bestLag = lag; }
+    }
+
+    const bpm = Math.round(fps * 60 / bestLag);
+    // Sanity check: 42–180 BPM is plausible at rest
+    return (bpm >= 42 && bpm <= 180) ? bpm : null;
   }
 
   // ✅ Privacy: load + save settings
