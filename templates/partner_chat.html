@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Beside Her: Ask AI</title>
+  <link rel="stylesheet" href="/static/css/style.css"/>
+  <style>
+    .chat-page {
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 24px 16px 120px;
+    }
+
+    .chat-intro {
+      background: #fff;
+      border-radius: 16px;
+      padding: 20px 24px;
+      margin-bottom: 20px;
+      border: 1px solid #f0e8e0;
+    }
+
+    .chat-intro h2 {
+      font-size: 1.2rem;
+      color: #2d1f1f;
+      margin-bottom: 6px;
+    }
+
+    .chat-intro p {
+      font-size: 0.88rem;
+      color: #888;
+      margin: 0;
+    }
+
+    .chat-suggestions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .suggestion-btn {
+      background: #fdf5f0;
+      border: 1px solid #f0ddd0;
+      border-radius: 20px;
+      padding: 7px 14px;
+      font-size: 0.82rem;
+      color: #7a4f3a;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .suggestion-btn:hover {
+      background: #f5e6dc;
+    }
+
+    .chat-messages {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .msg {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+    }
+
+    .msg.user {
+      flex-direction: row-reverse;
+    }
+
+    .msg-avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+
+    .msg.ai .msg-avatar {
+      background: #f5e6f0;
+    }
+
+    .msg.user .msg-avatar {
+      background: #e8f0f5;
+    }
+
+    .msg-bubble {
+      max-width: 82%;
+      padding: 12px 16px;
+      border-radius: 16px;
+      font-size: 0.92rem;
+      line-height: 1.55;
+    }
+
+    .msg.ai .msg-bubble {
+      background: #fff;
+      border: 1px solid #f0e8e0;
+      border-top-left-radius: 4px;
+      color: #2d1f1f;
+    }
+
+    .msg.user .msg-bubble {
+      background: #6b3f6b;
+      color: #fff;
+      border-top-right-radius: 4px;
+    }
+
+    .msg-bubble.typing {
+      color: #aaa;
+      font-style: italic;
+    }
+
+    .chat-input-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #fdf8f4;
+      border-top: 1px solid #f0e8e0;
+      padding: 14px 16px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .chat-input-bar input {
+      flex: 1;
+      border: 1px solid #e0d4c8;
+      border-radius: 24px;
+      padding: 11px 18px;
+      font-size: 0.92rem;
+      background: #fff;
+      outline: none;
+      font-family: inherit;
+    }
+
+    .chat-input-bar input:focus {
+      border-color: #c4a0b0;
+    }
+
+    .send-btn {
+      background: #6b3f6b;
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      width: 42px;
+      height: 42px;
+      font-size: 1.1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: background 0.2s;
+    }
+
+    .send-btn:hover { background: #5a335a; }
+    .send-btn:disabled { background: #ccc; cursor: not-allowed; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="logo">Beside <span>Her</span></a>
+  <div class="nav-links">
+    <a href="/partner">Dashboard</a>
+    <a href="/chat" class="active">Ask AI</a>
+    <a href="/report">Week</a>
+  </div>
+</nav>
+
+<div class="chat-page">
+
+  <div class="chat-intro">
+    <h2>💬 Ask anything about supporting her</h2>
+    <p>Your questions are answered using her actual check-in data — not generic advice.</p>
+    <div class="chat-suggestions">
+      <button class="suggestion-btn" onclick="sendSuggestion(this)">What should I cook tonight?</button>
+      <button class="suggestion-btn" onclick="sendSuggestion(this)">She's been crying a lot — is that normal?</button>
+      <button class="suggestion-btn" onclick="sendSuggestion(this)">How do I bring up seeing a therapist?</button>
+      <button class="suggestion-btn" onclick="sendSuggestion(this)">What should I NOT say today?</button>
+    </div>
+  </div>
+
+  <div class="chat-messages" id="chat-messages">
+    <div class="msg ai">
+      <div class="msg-avatar">💙</div>
+      <div class="msg-bubble">
+        Hi! I'm here to help you support her better. Ask me anything — I have access to her recent check-in data so my answers will be specific to how she's actually doing right now.
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="chat-input-bar">
+  <input 
+    type="text" 
+    id="chat-input" 
+    placeholder="Ask something about supporting her…"
+    onkeydown="if(event.key==='Enter') sendMessage()"
+  />
+  <button class="send-btn" id="send-btn" onclick="sendMessage()">➤</button>
+</div>
+
+<script>
+  async function sendMessage() {
+    const input = document.getElementById('chat-input');
+    const text  = input.value.trim();
+    if (!text) return;
+
+    appendMessage('user', text);
+    input.value = '';
+    document.getElementById('send-btn').disabled = true;
+
+    const typingId = appendMessage('ai', 'Thinking…', true);
+
+    try {
+      const res  = await fetch('/api/chat', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ message: text })
+      });
+      const data = await res.json();
+      updateMessage(typingId, data.response || 'Sorry, something went wrong.');
+    } catch (e) {
+      updateMessage(typingId, 'Could not reach the server. Please try again.');
+    }
+
+    document.getElementById('send-btn').disabled = false;
+    input.focus();
+  }
+
+  function sendSuggestion(btn) {
+    document.getElementById('chat-input').value = btn.textContent;
+    sendMessage();
+  }
+
+  function appendMessage(role, text, isTyping = false) {
+    const id   = 'msg-' + Date.now();
+    const msgs = document.getElementById('chat-messages');
+    const avatar = role === 'ai' ? '💙' : '👤';
+
+    msgs.innerHTML += `
+      <div class="msg ${role}" id="${id}">
+        <div class="msg-avatar">${avatar}</div>
+        <div class="msg-bubble ${isTyping ? 'typing' : ''}">${text}</div>
+      </div>`;
+
+    msgs.scrollTop = msgs.scrollHeight;
+    window.scrollTo(0, document.body.scrollHeight);
+    return id;
+  }
+
+  function updateMessage(id, text) {
+    const el = document.querySelector(`#${id} .msg-bubble`);
+    if (el) {
+      el.textContent = text;
+      el.classList.remove('typing');
+    }
+  }
+</script>
+
+</body>
+</html>
