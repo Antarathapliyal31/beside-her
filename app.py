@@ -887,8 +887,8 @@ def scan_vitals():
 
     try:
         from vitallens import VitalLens
-    except ImportError:
-        return jsonify({"error": "vitallens not installed"}), 500
+    except Exception as import_err:
+        return jsonify({"error": f"vitallens import failed: {import_err}"}), 500
 
     video_file = request.files.get("video")
     if not video_file:
