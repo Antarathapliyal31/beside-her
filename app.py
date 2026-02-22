@@ -877,6 +877,14 @@ def get_profile():
 def scan_vitals():
     """Receive a short video from the browser and run VitalLens pos method locally."""
     import tempfile, uuid, os as _os
+
+    # Point vitallens to the imageio-bundled ffmpeg binary (works on Render free tier)
+    try:
+        import imageio_ffmpeg
+        _os.environ["IMAGEIO_FFMPEG_EXE"] = imageio_ffmpeg.get_ffmpeg_exe()
+    except Exception:
+        pass  # if imageio_ffmpeg not available, let vitallens try system ffmpeg
+
     try:
         from vitallens import VitalLens
     except ImportError:
