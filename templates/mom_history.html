@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Beside Her – My Journey</title>
+  <link rel="stylesheet" href="/static/css/style.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    .journey-hero {
+      text-align: center;
+      padding: 1.5rem 0 0.5rem;
+    }
+    .journey-hero .hero-icon { font-size: 2.5rem; margin-bottom: 0.6rem; }
+    .journey-hero h2 {
+      font-family: 'Fraunces', serif;
+      font-size: 1.6rem;
+      color: var(--plum);
+      margin-bottom: 0.3rem;
+    }
+    .journey-hero p { color: var(--soft); font-size: 0.9rem; }
+
+    .summary-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.75rem;
+    }
+    @media (max-width: 480px) {
+      .summary-strip { grid-template-columns: repeat(2, 1fr); }
+    }
+    .summary-box {
+      background: white;
+      border-radius: 16px;
+      padding: 1rem 0.75rem;
+      text-align: center;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+    }
+    .summary-box .s-value {
+      font-family: 'Fraunces', serif;
+      font-size: 1.7rem;
+      font-weight: 800;
+      color: var(--plum);
+      line-height: 1.1;
+    }
+    .summary-box .s-label {
+      font-size: 0.72rem;
+      color: var(--soft);
+      margin-top: 0.3rem;
+      font-weight: 500;
+    }
+
+    .trend-message {
+      border-radius: 16px;
+      padding: 1.2rem 1.4rem;
+      display: flex;
+      gap: 0.9rem;
+      align-items: flex-start;
+      border: 1px solid var(--border);
+    }
+    .trend-message.positive { background: #f0faf3; border-color: #c3e6cb; }
+    .trend-message.neutral  { background: #fffbf0; border-color: #f5e6a0; }
+    .trend-message.concern  { background: #fff5f7; border-color: #f5ccd5; }
+    .trend-message .tm-icon { font-size: 1.5rem; flex-shrink: 0; margin-top: 0.1rem; }
+    .trend-message .tm-title {
+      font-family: 'Fraunces', serif;
+      font-size: 1rem;
+      color: var(--ink);
+      margin-bottom: 0.25rem;
+    }
+    .trend-message .tm-body { font-size: 0.88rem; color: var(--soft); line-height: 1.6; }
+
+    .history-chart-card {
+      background: white;
+      border-radius: 20px;
+      padding: 1.5rem;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+    }
+    .history-chart-card h3 {
+      font-family: 'Fraunces', serif;
+      font-size: 1rem;
+      color: var(--ink);
+      margin-bottom: 1rem;
+    }
+
+    .calendar-card {
+      background: white;
+      border-radius: 20px;
+      padding: 1.5rem;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+    }
+    .calendar-card h3 {
+      font-family: 'Fraunces', serif;
+      font-size: 1rem;
+      color: var(--ink);
+      margin-bottom: 0.3rem;
+    }
+    .cal-sub { font-size: 0.8rem; color: var(--soft); margin-bottom: 1rem; }
+    .calendar-grid { display: flex; flex-wrap: wrap; gap: 5px; }
+    .cal-day {
+      width: 30px; height: 30px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.68rem; font-weight: 600;
+      transition: transform 0.15s; cursor: default;
+    }
+    .cal-day:hover { transform: scale(1.2); }
+    .cal-day.mood-5 { background: #7aac8a; color: white; }
+    .cal-day.mood-4 { background: #a8d4b0; color: white; }
+    .cal-day.mood-3 { background: #f5e6a0; color: var(--ink); }
+    .cal-day.mood-2 { background: #f2a97e; color: white; }
+    .cal-day.mood-1 { background: #e8738a; color: white; }
+    .cal-day.no-log { background: #f5ede0; color: #e8ddd4; }
+    .cal-legend { display: flex; gap: 0.75rem; margin-top: 0.9rem; flex-wrap: wrap; }
+    .cal-legend-item { display: flex; align-items: center; gap: 0.3rem; font-size: 0.72rem; color: var(--soft); }
+    .cal-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+
+    .log-card {
+      background: white;
+      border-radius: 20px;
+      padding: 1.5rem;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+    }
+    .log-card h3 {
+      font-family: 'Fraunces', serif;
+      font-size: 1rem;
+      color: var(--ink);
+      margin-bottom: 1rem;
+    }
+    .log-item { padding: 0.9rem 0; border-bottom: 1px solid var(--border); }
+    .log-item:last-child { border-bottom: none; }
+    .log-date { font-size: 0.78rem; color: var(--soft); font-weight: 500; margin-bottom: 0.4rem; }
+    .log-pills { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+    .log-note { font-size: 0.83rem; color: var(--soft); font-style: italic; margin-top: 0.4rem; }
+
+    .pill {
+      display: inline-flex; align-items: center; gap: 0.3rem;
+      padding: 0.3rem 0.7rem; border-radius: 20px;
+      font-size: 0.78rem; font-weight: 500;
+    }
+    .mood-pill { background: #f0faf3; color: #7aac8a; border: 1px solid #c3e6cb; }
+    .anx-pill  { background: #fff5f7; color: #e8738a; border: 1px solid #f5ccd5; }
+    .en-pill   { background: #fff8f0; color: #f2a97e; border: 1px solid #fdd9bb; }
+    .sl-pill   { background: #f0f7ff; color: #7aabcf; border: 1px solid #c3d9f0; }
+
+    .empty-journey {
+      text-align: center;
+      padding: 3rem 1rem;
+      background: white;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+    }
+    .empty-journey .ej-icon { font-size: 2.5rem; margin-bottom: 1rem; display: block; }
+    .empty-journey h3 { font-family: 'Fraunces', serif; color: var(--ink); margin-bottom: 0.5rem; }
+    .empty-journey p { color: var(--soft); font-size: 0.9rem; }
+    .loading-text { color: var(--soft); font-size: 0.95rem; text-align: center; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="logo">Beside <span>Her</span></a>
+  <div class="nav-links">
+    <a href="/mom">Check In</a>
+    <a href="/mom/history" class="active">My Journey</a>
+  </div>
+</nav>
+
+<div class="page">
+
+  <div class="journey-hero">
+    <div class="hero-icon">🌸</div>
+    <h2>Your Journey</h2>
+    <p>Every check-in is a step toward understanding yourself.</p>
+  </div>
+
+  <div id="loading-state">
+    <p class="loading-text">Loading your journey...</p>
+  </div>
+
+  <div id="empty-state" class="empty-journey hidden">
+    <span class="ej-icon">💌</span>
+    <h3>No check-ins yet</h3>
+    <p>Start logging daily to see your journey unfold.</p>
+    <a href="/mom" class="submit-btn"
+       style="display:inline-block;margin-top:1.25rem;text-decoration:none;width:auto;padding:0.75rem 1.5rem">
+      Start Check-In
+    </a>
+  </div>
+
+  <div id="main-content" class="hidden">
+
+    <div class="summary-strip" id="summary-strip"></div>
+
+    <div class="trend-message" id="trend-message">
+      <div class="tm-icon"></div>
+      <div>
+        <div class="tm-title"></div>
+        <div class="tm-body"></div>
+      </div>
+    </div>
+
+    <div class="history-chart-card">
+      <h3>Mood &amp; Anxiety Over Time</h3>
+      <canvas id="chart-history"></canvas>
+    </div>
+
+    <div class="history-chart-card">
+      <h3>Energy &amp; Sleep Over Time</h3>
+      <canvas id="chart-energy-history"></canvas>
+    </div>
+
+    <div class="calendar-card">
+      <h3>Check-In Calendar</h3>
+      <p class="cal-sub">Colour shows your mood that day. Faded = no log.</p>
+      <div class="calendar-grid" id="calendar-grid"></div>
+      <div class="cal-legend">
+        <div class="cal-legend-item"><div class="cal-dot" style="background:#7aac8a"></div> Great</div>
+        <div class="cal-legend-item"><div class="cal-dot" style="background:#a8d4b0"></div> Good</div>
+        <div class="cal-legend-item"><div class="cal-dot" style="background:#f5e6a0"></div> Okay</div>
+        <div class="cal-legend-item"><div class="cal-dot" style="background:#f2a97e"></div> Low</div>
+        <div class="cal-legend-item"><div class="cal-dot" style="background:#e8738a"></div> Very Low</div>
+        <div class="cal-legend-item"><div class="cal-dot" style="background:#f5ede0"></div> No log</div>
+      </div>
+    </div>
+
+    <div class="log-card">
+      <h3>All Check-Ins</h3>
+      <div id="log-list"></div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+  const moodEm = ["","😞","😔","😐","🙂","😊"];
+  const anxEm  = ["","😌","😶","😟","😰","😱"];
+  const enEm   = ["","🪫","😴","🚶","🏃","⚡"];
+  const slEm   = ["","😩","😪","😶","😌","😴"];
+
+  async function loadHistory() {
+    const res  = await fetch('/api/checkins');
+    const data = (await res.json()).slice(0, 60).reverse();
+
+    document.getElementById('loading-state').classList.add('hidden');
+
+    if (!data.length) {
+      document.getElementById('empty-state').classList.remove('hidden');
+      return;
+    }
+
+    document.getElementById('main-content').classList.remove('hidden');
+    renderSummary(data);
+    renderTrendMessage(data);
+    renderCharts(data);
+    renderCalendar(data);
+    renderLog(data);
+  }
+
+  function renderSummary(data) {
+    const total    = data.length;
+    const moodAvg  = (data.reduce((s, d) => s + d.mood, 0) / total).toFixed(1);
+    const bestMood = Math.max(...data.map(d => d.mood));
+    const recentAvg = data.slice(-7).reduce((s, d) => s + d.mood, 0) / Math.min(7, data.length);
+    const allAvg    = data.reduce((s, d) => s + d.mood, 0) / total;
+    const trending  = recentAvg >= allAvg ? '📈' : '📉';
+
+    document.getElementById('summary-strip').innerHTML = `
+      <div class="summary-box">
+        <div class="s-value">${total}</div>
+        <div class="s-label">Days Logged</div>
+      </div>
+      <div class="summary-box">
+        <div class="s-value">${moodAvg}</div>
+        <div class="s-label">Avg Mood</div>
+      </div>
+      <div class="summary-box">
+        <div class="s-value">${moodEm[bestMood]}</div>
+        <div class="s-label">Best Mood</div>
+      </div>
+      <div class="summary-box">
+        <div class="s-value">${trending}</div>
+        <div class="s-label">Recent Trend</div>
+      </div>
+    `;
+  }
+
+  function renderTrendMessage(data) {
+    const box       = document.getElementById('trend-message');
+    const recent    = data.slice(-7);
+    const older     = data.slice(0, -7);
+    const recentAvg = recent.reduce((s, d) => s + d.mood, 0) / recent.length;
+    const olderAvg  = older.length
+      ? older.reduce((s, d) => s + d.mood, 0) / older.length
+      : recentAvg;
+    const diff = recentAvg - olderAvg;
+
+    let cls, icon, title, body;
+    if (data.length < 3) {
+      cls = 'neutral'; icon = '🌱';
+      title = 'Just getting started';
+      body  = 'Keep logging daily — patterns will start to emerge after a few days.';
+    } else if (diff >= 0.3) {
+      cls = 'positive'; icon = '🌟';
+      title = "You're trending upward";
+      body  = "Your mood has been better recently compared to earlier in your journey. Keep going — you're doing something right.";
+    } else if (diff <= -0.3) {
+      cls = 'concern'; icon = '💛';
+      title = 'Things have felt harder lately';
+      body  = "Your recent check-ins show your mood has been lower than earlier. You're not alone in this — your partner can see this and is here to support you.";
+    } else {
+      cls = 'neutral'; icon = '🌤';
+      title = 'Holding steady';
+      body  = 'Your mood has been fairly consistent. Keep checking in — small changes are easier to catch early.';
+    }
+
+    box.className = `trend-message ${cls}`;
+    box.querySelector('.tm-icon').textContent  = icon;
+    box.querySelector('.tm-title').textContent = title;
+    box.querySelector('.tm-body').textContent  = body;
+  }
+
+  function renderCharts(data) {
+    const labels = data.map(d => d.date.slice(5));
+
+    new Chart(document.getElementById('chart-history'), {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          { label: 'Mood',    data: data.map(d => d.mood),
+            borderColor: '#7aac8a', backgroundColor: 'rgba(122,172,138,0.08)',
+            tension: 0.4, fill: true, pointRadius: 4, pointBackgroundColor: '#7aac8a' },
+          { label: 'Anxiety', data: data.map(d => d.anxiety),
+            borderColor: '#e8738a', backgroundColor: 'rgba(232,115,138,0.08)',
+            tension: 0.4, fill: true, pointRadius: 4, pointBackgroundColor: '#e8738a' }
+        ]
+      },
+      options: { scales: { y: { min: 1, max: 5 } }, plugins: { legend: { position: 'bottom' } } }
+    });
+
+    new Chart(document.getElementById('chart-energy-history'), {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          { label: 'Energy', data: data.map(d => d.energy),
+            borderColor: '#f5a623', backgroundColor: 'rgba(245,166,35,0.08)',
+            tension: 0.4, fill: true, pointRadius: 4, pointBackgroundColor: '#f5a623' },
+          { label: 'Sleep',  data: data.map(d => d.sleep_quality),
+            borderColor: '#a8c4d0', backgroundColor: 'rgba(168,196,208,0.08)',
+            tension: 0.4, fill: true, pointRadius: 4, pointBackgroundColor: '#a8c4d0' }
+        ]
+      },
+      options: { scales: { y: { min: 1, max: 5 } }, plugins: { legend: { position: 'bottom' } } }
+    });
+  }
+
+  function renderCalendar(data) {
+    const moodMap = {};
+    data.forEach(d => { moodMap[d.date] = d.mood; });
+
+    const grid  = document.getElementById('calendar-grid');
+    const today = new Date();
+    const days  = [];
+
+    for (let i = 59; i >= 0; i--) {
+      const d   = new Date(today);
+      d.setDate(d.getDate() - i);
+      const key = new Date(d.getTime() - d.getTimezoneOffset() * 60000)
+                    .toISOString().slice(0, 10);
+      days.push({ key, day: d.getDate(), mood: moodMap[key] });
+    }
+
+    grid.innerHTML = days.map(({ key, day, mood }) =>
+      mood
+        ? `<div class="cal-day mood-${mood}" title="${key}: Mood ${mood}/5">${day}</div>`
+        : `<div class="cal-day no-log" title="${key}: No log">${day}</div>`
+    ).join('');
+  }
+
+  function renderLog(data) {
+    document.getElementById('log-list').innerHTML =
+      [...data].reverse().map(d => `
+        <div class="log-item">
+          <div class="log-date">${d.date}</div>
+          <div class="log-pills">
+            ${d.mood          ? `<span class="pill mood-pill">${moodEm[d.mood]} Mood ${d.mood}/5</span>` : ''}
+            ${d.anxiety       ? `<span class="pill anx-pill">${anxEm[d.anxiety]} Anxiety ${d.anxiety}/5</span>` : ''}
+            ${d.energy        ? `<span class="pill en-pill">${enEm[d.energy]} Energy ${d.energy}/5</span>` : ''}
+            ${d.sleep_quality ? `<span class="pill sl-pill">${slEm[d.sleep_quality]} Sleep ${d.sleep_quality}/5</span>` : ''}
+          </div>
+          ${d.notes ? `<div class="log-note">"${d.notes}"</div>` : ''}
+        </div>`).join('');
+  }
+
+  loadHistory();
+</script>
+
+</body>
+</html>
