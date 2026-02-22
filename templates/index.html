@@ -3,48 +3,332 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Beside Her</title>
+  <title>Beside Her — Postpartum Support for Partners</title>
   <link rel="stylesheet" href="/static/css/style.css"/>
+  <style>
+    body { background: #fdf8f4; }
+
+    .landing-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 40px;
+    }
+
+    .nav-cta {
+      background: #6b3f6b;
+      color: #fff;
+      border-radius: 20px;
+      padding: 9px 22px;
+      font-size: 0.88rem;
+      text-decoration: none;
+      font-family: inherit;
+    }
+
+    .hero {
+      text-align: center;
+      padding: 60px 24px 40px;
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    .hero-tag {
+      display: inline-block;
+      background: #f5e6f0;
+      color: #6b3f6b;
+      border-radius: 20px;
+      padding: 5px 16px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      margin-bottom: 20px;
+    }
+
+    .hero h1 {
+      font-size: 2.8rem;
+      color: #2d1f1f;
+      line-height: 1.2;
+      margin-bottom: 18px;
+      font-weight: 800;
+    }
+
+    .hero h1 span { color: #c4708a; }
+
+    .hero p {
+      font-size: 1.1rem;
+      color: #7a6060;
+      line-height: 1.65;
+      margin-bottom: 32px;
+    }
+
+    .hero-btns {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .btn-primary {
+      background: #6b3f6b;
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      padding: 14px 28px;
+      font-size: 1rem;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .btn-secondary {
+      background: #fff;
+      color: #6b3f6b;
+      border: 2px solid #e0c8d8;
+      border-radius: 12px;
+      padding: 14px 28px;
+      font-size: 1rem;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .stat-bar {
+      background: #6b3f6b;
+      color: #fff;
+      text-align: center;
+      padding: 14px 24px;
+      font-size: 0.9rem;
+    }
+
+    .stat-bar span { opacity: 0.6; margin: 0 10px; }
+
+    .section {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 60px 24px;
+    }
+
+    .section-tag {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #c4708a;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .section h2 {
+      font-size: 1.9rem;
+      color: #2d1f1f;
+      margin-bottom: 40px;
+      font-weight: 800;
+    }
+
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+
+    .step {
+      background: #fff;
+      border-radius: 16px;
+      padding: 24px;
+      border: 1px solid #f0e8e0;
+    }
+
+    .step-num {
+      width: 32px;
+      height: 32px;
+      background: #f5e6f0;
+      color: #6b3f6b;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.85rem;
+      margin-bottom: 14px;
+    }
+
+    .step h3 { font-size: 1rem; color: #2d1f1f; margin-bottom: 8px; }
+    .step p { font-size: 0.88rem; color: #9a8080; line-height: 1.55; margin: 0; }
+
+    .features { background: #fff; border-top: 1px solid #f0e8e0; border-bottom: 1px solid #f0e8e0; }
+    .features-inner { max-width: 800px; margin: 0 auto; padding: 60px 24px; }
+
+    .feature-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+
+    .feature-card {
+      background: #fdf8f4;
+      border-radius: 14px;
+      padding: 22px;
+      border: 1px solid #f0e8e0;
+    }
+
+    .feature-icon { font-size: 1.6rem; margin-bottom: 10px; }
+    .feature-card h3 { font-size: 0.98rem; color: #2d1f1f; margin-bottom: 6px; }
+    .feature-card p { font-size: 0.85rem; color: #9a8080; line-height: 1.55; margin: 0; }
+
+    .cta-section {
+      text-align: center;
+      padding: 70px 24px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .cta-section h2 { font-size: 2rem; color: #2d1f1f; margin-bottom: 14px; font-weight: 800; }
+    .cta-section p { color: #9a8080; margin-bottom: 32px; font-size: 1rem; line-height: 1.6; }
+
+    .cta-cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    .cta-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 24px 20px;
+      border: 1px solid #f0e8e0;
+      text-decoration: none;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .cta-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
+    .cta-card-emoji { font-size: 1.8rem; margin-bottom: 10px; }
+    .cta-card h3 { font-size: 1rem; color: #2d1f1f; margin-bottom: 6px; }
+    .cta-card p { font-size: 0.82rem; color: #9a8080; margin: 0 0 14px; }
+
+    .cta-card-btn {
+      display: inline-block;
+      background: #6b3f6b;
+      color: #fff;
+      border-radius: 8px;
+      padding: 8px 16px;
+      font-size: 0.82rem;
+      font-weight: 600;
+    }
+
+    .footer {
+      text-align: center;
+      padding: 24px;
+      font-size: 0.8rem;
+      color: #c0a8a8;
+      border-top: 1px solid #f0e8e0;
+    }
+
+    @media (max-width: 600px) {
+      .hero h1 { font-size: 2rem; }
+      .steps { grid-template-columns: 1fr; }
+      .feature-grid { grid-template-columns: 1fr; }
+      .cta-cards { grid-template-columns: 1fr; }
+      .landing-nav { padding: 16px 20px; }
+      .stat-bar { font-size: 0.78rem; }
+    }
+  </style>
 </head>
 <body>
 
-<nav>
+<nav class="landing-nav">
   <a href="/" class="logo">Beside <span>Her</span></a>
+  <a href="/login" class="nav-cta">Sign In</a>
 </nav>
 
-<div class="landing-page">
-
-  <div class="landing-hero">
-    <div class="hero-icon">🤝</div>
-    <h1>Beside Her</h1>
-    <p class="hero-sub">
-      Postpartum support for the people who love her most.
-    </p>
-  </div>
-
-  <div class="landing-cards">
-
-    <a href="/mom" class="landing-card card-mom">
-      <div class="card-emoji">🌸</div>
-      <h2>I'm the Mom</h2>
-      <p>Log how you're feeling today. Your partner will know exactly how to show up for you.</p>
-      <div class="card-btn">Check In Today →</div>
-    </a>
-
-    <a href="/partner" class="landing-card card-partner">
-      <div class="card-emoji">🤍</div>
-      <h2>I'm the Partner</h2>
-      <p>See how she's really doing and get specific guidance on how to support her today.</p>
-      <div class="card-btn">See Dashboard →</div>
-    </a>
-
-  </div>
-
-  <p class="landing-footer">
-    1 in 5 mothers experience postpartum depression. 
-    You don't have to figure it out alone.
+<div class="hero">
+  <div class="hero-tag">🌸 Postpartum Support Platform</div>
+  <h1>She needs you.<br/>We'll show you <span>exactly how.</span></h1>
+  <p>
+    Beside Her uses clinical ML analysis and AI to give partners 
+    real-time, personalized guidance based on how she's actually feeling — 
+    not generic advice from the internet.
   </p>
+  <div class="hero-btns">
+    <a href="/signup" class="btn-primary">Get Started →</a>
+    <a href="/login" class="btn-secondary">Sign In</a>
+  </div>
+</div>
 
+<div class="stat-bar">
+  1 in 5 mothers experience postpartum depression
+  <span>·</span>
+  80% of partners feel unprepared to help
+  <span>·</span>
+  Early support reduces PPD severity by 40%
+</div>
+
+<div class="section">
+  <div class="section-tag">How it works</div>
+  <h2>Simple for her. Powerful for you.</h2>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <h3>She checks in daily</h3>
+      <p>60-second mood, anxiety, energy and sleep check-in. Optional vital signs scan via camera.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <h3>ML detects patterns</h3>
+      <p>7 clinical algorithms analyze her data — trend detection, anomaly detection, severity scoring and more.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <h3>You get a daily playbook</h3>
+      <p>Specific actions for today — what to do in 2 minutes, 15 minutes, and 60 minutes, grounded in her data.</p>
+    </div>
+  </div>
+</div>
+
+<div class="features">
+  <div class="features-inner">
+    <div class="section-tag">What makes us different</div>
+    <h2>Built on clinical intelligence.</h2>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <div class="feature-icon">🧠</div>
+        <h3>Phase-aware analysis</h3>
+        <p>Week 2 and week 10 postpartum are completely different. Our ML knows this and adjusts every insight accordingly.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📸</div>
+        <h3>Contactless vital signs</h3>
+        <p>VitalLens detects heart rate, HRV and breathing rate from a 30-second camera scan — no wearable needed.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🎯</div>
+        <h3>Masking detection</h3>
+        <p>When she says "I'm fine" but her vitals show stress, we catch it. Objective data reveals what words sometimes hide.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">💬</div>
+        <h3>AI powered guidance</h3>
+        <p>Ask anything — what to cook, what not to say, how to bring up therapy. Every answer is specific to her actual data.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="cta-section">
+  <h2>Ready to show up for her?</h2>
+  <p>Create your account and connect with your partner in under 2 minutes.</p>
+  <div class="cta-cards">
+    <a href="/signup" class="cta-card">
+      <div class="cta-card-emoji">🌸</div>
+      <h3>I'm the Mom</h3>
+      <p>Log how you're feeling. Your partner will know exactly how to help.</p>
+      <div class="cta-card-btn">Get Started →</div>
+    </a>
+    <a href="/signup" class="cta-card">
+      <div class="cta-card-emoji">🤍</div>
+      <h3>I'm the Partner</h3>
+      <p>Get daily guidance on how to show up for her based on her real data.</p>
+      <div class="cta-card-btn">Get Started →</div>
+    </a>
+  </div>
+</div>
+
+<div class="footer">
+  © 2026 Beside Her · Built at HackHERS 2026 · For wellness purposes only
 </div>
 
 </body>
