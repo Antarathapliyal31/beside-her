@@ -210,7 +210,7 @@ def get_digest():
         .select("*")\
         .eq("user_id", mom_id)\
         .order("date", desc=True)\
-        .limit(45)\
+        .limit(7)\
         .execute().data
 
     obs = supabase.table("observations")\
@@ -465,6 +465,7 @@ def get_weekly():
         analysis["clusters"] = {"dominant": pt.get("dominant_pattern", "mixed")}
         analysis["weeks"]    = ph.get("weeks", 0)
         analysis["phase"]    = ph.get("phase", "unknown")
+        analysis["trends"]   = {"mood_trend": (analysis.get("trends") or {}).get("mood", {}).get("trend", "stable") if isinstance((analysis.get("trends") or {}).get("mood"), dict) else "stable"}
         analysis["flags"]    = [{"message": f, "level": "warn"} for f in (analysis.get("flags") or {}).get("flags", [])]
     else:
         analysis["ready"] = False
