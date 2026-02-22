@@ -3,90 +3,114 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Beside Her — Check In</title>
+  <title>Beside Her – Check In</title>
   <link rel="stylesheet" href="/static/css/style.css"/>
   <script type="module" src="https://cdn.jsdelivr.net/npm/vitallens/dist/vitallens.browser.js"></script>
   <style>
-    .checkin-header-icon {
+    .vitals-section {
+      background: var(--white);
+      border-radius: 14px;
+      padding: 18px 20px;
+      margin: 16px 0;
+      border: 1px solid var(--border);
+    }
+    .vitals-header { display: flex; flex-direction: column; gap: 3px; margin-bottom: 14px; }
+    .vitals-header span:first-child { font-weight: 600; color: var(--navy); font-size: 0.95rem; }
+    .vitals-sub { font-size: 0.8rem; color: var(--muted); }
+
+    .scan-btn {
+      background: var(--teal);
+      color: #fff;
+      border: none;
+      border-radius: 100px;
+      padding: 10px 20px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      width: 100%;
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+      transition: all 0.2s;
+      box-shadow: 0 2px 10px rgba(45,143,143,0.3);
+    }
+    .scan-btn:hover { background: var(--teal2); transform: translateY(-1px); }
+    .scan-btn:disabled { background: var(--border); cursor: not-allowed; transform: none; box-shadow: none; }
+
+    .vitals-result { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+    .vital-pill {
+      background: rgba(45,143,143,0.08);
+      border: 1px solid rgba(45,143,143,0.25);
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-size: 0.85rem;
+      color: var(--teal);
+      font-weight: 500;
+    }
+    #scanner-container { margin-top: 14px; }
+
+    /* Privacy */
+    .privacy-section {
+      background: var(--white);
+      border-radius: 14px;
+      padding: 18px 20px;
+      margin: 16px 0;
+      border: 1px solid var(--border);
+    }
+    .privacy-header { display: flex; flex-direction: column; gap: 3px; margin-bottom: 12px; }
+    .privacy-header span:first-child { font-weight: 600; color: var(--navy); font-size: 0.95rem; }
+    .privacy-sub { font-size: 0.8rem; color: var(--muted); }
+
+    .privacy-list { display: grid; gap: 10px; margin-top: 10px; margin-bottom: 14px; }
+
+    .privacy-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .privacy-item:hover { border-color: var(--teal); background: rgba(45,143,143,0.04); }
+
+    .privacy-item input[type="checkbox"] {
+      width: 16px; height: 16px;
+      margin-top: 2px;
+      accent-color: var(--teal);
+      flex-shrink: 0;
+    }
+    .privacy-item .title { font-weight: 600; font-size: 0.9rem; color: var(--navy); line-height: 1.2; }
+    .privacy-item .desc  { font-size: 0.82rem; color: var(--muted); margin-top: 3px; line-height: 1.4; }
+
+    .privacy-actions { display: flex; gap: 12px; align-items: center; }
+
+    .privacy-save-btn {
+      background: var(--teal);
+      color: #fff;
+      border: none;
+      border-radius: 100px;
+      padding: 10px 20px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      flex: 1;
+      transition: all 0.2s;
+      box-shadow: 0 2px 10px rgba(45,143,143,0.3);
+    }
+    .privacy-save-btn:hover { background: var(--teal2); transform: translateY(-1px); }
+
+    .privacy-saved { font-size: 0.85rem; color: var(--teal); font-weight: 600; display: none; white-space: nowrap; }
+
+    .checkin-icon-wrap {
       width: 52px; height: 52px;
       background: rgba(45,143,143,0.1);
       border-radius: 14px;
       display: flex; align-items: center; justify-content: center;
-      margin: 0 auto 1rem;
+      margin: 0 auto 14px;
     }
-    .checkin-header-icon svg { width: 26px; height: 26px; stroke: var(--teal); }
-
-    .time-badge {
-      display: inline-flex; align-items: center; gap: 5px;
-      background: var(--teal); color: white;
-      font-size: 0.78rem; font-weight: 600;
-      padding: 0.3rem 0.9rem; border-radius: 20px;
-      margin-bottom: 0.75rem; letter-spacing: 0.03em;
-    }
-    .time-badge svg { width: 13px; height: 13px; stroke: white; }
-
-    .scale-header {
-      display: flex; align-items: center; gap: 8px;
-      margin-bottom: 0.75rem;
-    }
-    .scale-header svg   { width: 18px; height: 18px; stroke: var(--teal); flex-shrink: 0; }
-    .scale-header span  { font-weight: 600; font-size: 0.92rem; color: var(--navy); }
-
-    .form-divider { height: 1px; background: var(--border); margin: 0.25rem 0 1.75rem; }
-
-    .vitals-section {
-      background: var(--bg); border-radius: 14px;
-      padding: 18px 20px; margin: 8px 0;
-      border: 1px solid var(--border);
-    }
-    .vitals-header { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
-    .vitals-header svg { width: 18px; height: 18px; stroke: var(--teal); }
-    .vitals-title { font-weight: 600; color: var(--navy); font-size: 0.95rem; }
-    .vitals-sub   { font-size: 0.8rem; color: var(--muted); margin-bottom: 14px; margin-left: 26px; }
-
-    .vitals-result { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
-    .vital-pill {
-      display: flex; align-items: center; gap: 5px;
-      background: rgba(45,143,143,0.08); border: 1px solid rgba(45,143,143,0.25);
-      border-radius: 20px; padding: 6px 14px;
-      font-size: 0.84rem; color: var(--teal); font-weight: 500;
-    }
-    .vital-pill svg { width: 13px; height: 13px; stroke: var(--teal); flex-shrink: 0; }
-
-    .scan-btn {
-      background: var(--teal); color: #fff; border: none;
-      border-radius: 100px; padding: 10px 20px;
-      font-size: 0.9rem; cursor: pointer; width: 100%;
-      font-family: 'Inter', sans-serif; font-weight: 600;
-      transition: all 0.2s; box-shadow: 0 2px 10px rgba(45,143,143,0.3);
-      display: flex; align-items: center; justify-content: center; gap: 8px;
-    }
-    .scan-btn svg { width: 16px; height: 16px; stroke: white; }
-    .scan-btn:hover { background: var(--teal2); transform: translateY(-1px); box-shadow: 0 5px 16px rgba(45,143,143,0.4); }
-    .scan-btn:disabled { background: var(--border); cursor: not-allowed; transform: none; box-shadow: none; color: var(--muted); }
-
-    #scanner-container { margin-top: 14px; }
-
-    .submit-btn {
-      width: 100%; padding: 1rem;
-      background: var(--teal); color: white;
-      border: none; border-radius: 100px;
-      font-size: 1rem; font-weight: 600;
-      font-family: 'Inter', sans-serif; cursor: pointer;
-      transition: all 0.25s; box-shadow: 0 4px 16px rgba(45,143,143,0.3);
-      margin-top: 0.5rem;
-      display: flex; align-items: center; justify-content: center; gap: 8px;
-    }
-    .submit-btn svg { width: 18px; height: 18px; stroke: white; }
-    .submit-btn:hover { background: var(--teal2); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(45,143,143,0.4); }
-
-    .success-icon-box {
-      width: 64px; height: 64px;
-      background: rgba(45,143,143,0.1); border-radius: 18px;
-      display: flex; align-items: center; justify-content: center;
-      margin: 0 auto 1.25rem;
-    }
-    .success-icon-box svg { width: 32px; height: 32px; stroke: var(--teal); }
+    .checkin-icon-wrap svg { width: 28px; height: 28px; color: var(--teal); stroke: var(--teal); }
   </style>
 </head>
 <body>
@@ -103,24 +127,15 @@
 <div class="page">
   <div class="checkin-card">
 
-    <!-- Header -->
     <div class="checkin-header">
-      <div class="checkin-header-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+      <div class="checkin-icon-wrap">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z"/>
         </svg>
       </div>
       <h2>How are you feeling today?</h2>
-      <div class="time-badge">
-        <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-        </svg>
-        60 seconds
-      </div>
-      <p class="checkin-sub">
-        No right or wrong answers. 
-        Your partner will know exactly how to show up for you.
-      </p>
+      <div class="time-badge">60 seconds</div>
+      <p class="checkin-sub">No right or wrong answers. Your partner will know exactly how to show up for you.</p>
     </div>
 
     <form id="checkin-form">
@@ -130,16 +145,8 @@
         <input type="date" id="date" readonly/>
       </div>
 
-      <div class="form-divider"></div>
-
-      <!-- Mood -->
       <div class="form-group">
-        <div class="scale-header">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>
-          </svg>
-          <span>Overall Mood</span>
-        </div>
+        <label>Overall Mood</label>
         <div class="emoji-scale" data-field="mood">
           <button type="button" class="e-btn" data-val="1"><span class="em">😞</span><span class="lbl">Very Low</span></button>
           <button type="button" class="e-btn" data-val="2"><span class="em">😔</span><span class="lbl">Low</span></button>
@@ -149,14 +156,8 @@
         </div>
       </div>
 
-      <!-- Anxiety -->
       <div class="form-group">
-        <div class="scale-header">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
-          </svg>
-          <span>Anxiety Level</span>
-        </div>
+        <label>Anxiety Level</label>
         <div class="emoji-scale" data-field="anxiety">
           <button type="button" class="e-btn" data-val="1"><span class="em">😌</span><span class="lbl">None</span></button>
           <button type="button" class="e-btn" data-val="2"><span class="em">😶</span><span class="lbl">Mild</span></button>
@@ -166,14 +167,8 @@
         </div>
       </div>
 
-      <!-- Energy -->
       <div class="form-group">
-        <div class="scale-header">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
-          </svg>
-          <span>Energy Level</span>
-        </div>
+        <label>Energy Level</label>
         <div class="emoji-scale" data-field="energy">
           <button type="button" class="e-btn" data-val="1"><span class="em">🪫</span><span class="lbl">Empty</span></button>
           <button type="button" class="e-btn" data-val="2"><span class="em">😴</span><span class="lbl">Low</span></button>
@@ -183,14 +178,8 @@
         </div>
       </div>
 
-      <!-- Sleep -->
       <div class="form-group">
-        <div class="scale-header">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-          </svg>
-          <span>Sleep Quality</span>
-        </div>
+        <label>Sleep Quality</label>
         <div class="emoji-scale" data-field="sleep_quality">
           <button type="button" class="e-btn" data-val="1"><span class="em">😩</span><span class="lbl">Terrible</span></button>
           <button type="button" class="e-btn" data-val="2"><span class="em">😪</span><span class="lbl">Poor</span></button>
@@ -200,77 +189,97 @@
         </div>
       </div>
 
-      <!-- Notes -->
       <div class="form-group">
-        <div class="scale-header">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-          </svg>
-          <span>Anything your partner should know? <span class="optional">(optional)</span></span>
-        </div>
+        <label>Anything your partner should know? <span class="optional">(optional)</span></label>
         <textarea id="notes" rows="3" placeholder="I've been feeling… / I could really use… / Today was hard because…"></textarea>
       </div>
 
-      <!-- VitalLens -->
+      <!-- Privacy Settings -->
+      <div class="privacy-section">
+        <div class="privacy-header">
+          <span>Privacy Settings</span>
+          <span class="privacy-sub">You decide what your partner can see. You can change this anytime.</span>
+        </div>
+        <div class="privacy-list">
+          <label class="privacy-item">
+            <input type="checkbox" id="pv_scores">
+            <div>
+              <div class="title">Share check-in scores</div>
+              <div class="desc">Mood, anxiety, energy and sleep ratings</div>
+            </div>
+          </label>
+          <label class="privacy-item">
+            <input type="checkbox" id="pv_notes">
+            <div>
+              <div class="title">Share notes</div>
+              <div class="desc">The message you type above for your partner</div>
+            </div>
+          </label>
+          <label class="privacy-item">
+            <input type="checkbox" id="pv_ml">
+            <div>
+              <div class="title">Share ML insights</div>
+              <div class="desc">Trends, flags, patterns and support-needed score</div>
+            </div>
+          </label>
+          <label class="privacy-item">
+            <input type="checkbox" id="pv_playbook">
+            <div>
+              <div class="title">Share today's guidance</div>
+              <div class="desc">The action plan your partner sees on their dashboard</div>
+            </div>
+          </label>
+          <label class="privacy-item">
+            <input type="checkbox" id="pv_weekly">
+            <div>
+              <div class="title">Share weekly report</div>
+              <div class="desc">A weekly summary and action plan sent to your partner</div>
+            </div>
+          </label>
+          <label class="privacy-item">
+            <input type="checkbox" id="pv_silence">
+            <div>
+              <div class="title">Allow silence alerts</div>
+              <div class="desc">If you don't check in for 2+ days, your partner gets a gentle nudge</div>
+            </div>
+          </label>
+        </div>
+        <div class="privacy-actions">
+          <button type="button" class="privacy-save-btn" id="savePrivacyBtn">Save Privacy Settings</button>
+          <span class="privacy-saved" id="privacySavedMsg">Saved ✓</span>
+        </div>
+      </div>
+
+      <!-- VitalLens Scanner -->
       <div class="vitals-section">
         <div class="vitals-header">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-          </svg>
-          <span class="vitals-title">Vital Signs Scan</span>
+          <span>Scan your vitals</span>
+          <span class="vitals-sub">Optional — 30-second camera scan for heart rate & breathing</span>
         </div>
-        <p class="vitals-sub">Optional — 30-second camera scan for heart rate &amp; breathing</p>
-
         <div id="vitals-result" class="vitals-result hidden">
-          <div class="vital-pill" id="hr-pill">
-            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-            HR: —
-          </div>
-          <div class="vital-pill" id="rr-pill">
-            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-            Breathing: —
-          </div>
-          <div class="vital-pill" id="hrv-pill">
-            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-            HRV: —
-          </div>
+          <div class="vital-pill" id="hr-pill">HR: —</div>
+          <div class="vital-pill" id="rr-pill">Breathing: —</div>
+          <div class="vital-pill" id="hrv-pill">HRV: —</div>
         </div>
-
-        <button type="button" class="scan-btn" id="scan-btn" onclick="startScan()">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>
-          </svg>
-          Start Vital Scan
-        </button>
-
+        <button type="button" class="scan-btn" id="scan-btn" onclick="startScan()">Scan Vitals</button>
         <div id="scanner-container" class="hidden">
           <vitallens-vitals-scan
             id="vl-scanner"
             method="pos"
-            api-key="YOUR_VITALLENS_API_KEY"
-            proxy-url="https://beside-her-2.onrender.com/api/vitallens-proxy"
+            api-key="cBF3KKhUiK1fKJmYST6JW9v6sxFpkPpY5elywPcr"
             min-face-size="0.1"
             camera-facing="user"
           ></vitallens-vitals-scan>
         </div>
       </div>
 
-      <button type="submit" class="submit-btn">
-        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
-        </svg>
-        Send to My Partner
-      </button>
+      <button type="submit" class="submit-btn">Send to My Partner</button>
 
     </form>
 
-    <!-- Success -->
+    <!-- Success screen -->
     <div id="success" class="success-msg hidden">
-      <div class="success-icon-box">
-        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
-        </svg>
-      </div>
+      <span class="success-icon">✓</span>
       <h3>Your partner knows</h3>
       <p>They'll see your check-in and get personalised guidance on how to show up for you today.</p>
       <button onclick="resetForm()" class="reset-btn">Log another day</button>
@@ -286,7 +295,6 @@
   document.getElementById("date").min   = today;
 
   const vals = { mood: null, anxiety: null, energy: null, sleep_quality: null };
-
   document.querySelectorAll('.emoji-scale').forEach(scale => {
     scale.querySelectorAll('.e-btn').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -301,43 +309,70 @@
 
   function startScan() {
     document.getElementById('scanner-container').classList.remove('hidden');
-    const btn = document.getElementById('scan-btn');
-    btn.textContent = '⏳ Scanning… stay still';
-    btn.disabled = true;
-
+    document.getElementById('scan-btn').textContent = 'Scanning… stay still';
+    document.getElementById('scan-btn').disabled = true;
     const scanner = document.getElementById('vl-scanner');
-
     scanner.addEventListener('vitals', (e) => {
       const v = e.detail?.vital_signs || e.detail;
       if (!v) return;
-      const hr  = v.heart_rate?.value;
-      const rr  = v.respiratory_rate?.value;
-      const hrv = v.hrv_sdnn?.value;
+      const hr = v.heart_rate?.value, rr = v.respiratory_rate?.value, hrv = v.hrv_sdnn?.value;
       window.scannedVitals.heart_rate     = hr  ? Math.round(hr)  : null;
       window.scannedVitals.breathing_rate = rr  ? Math.round(rr)  : null;
       window.scannedVitals.hrv            = hrv ? Math.round(hrv) : null;
-      document.getElementById('hr-pill').childNodes[document.getElementById('hr-pill').childNodes.length - 1].textContent  = hr  ? ` HR: ${Math.round(hr)} bpm`        : ' HR: —';
-      document.getElementById('rr-pill').childNodes[document.getElementById('rr-pill').childNodes.length - 1].textContent  = rr  ? ` Breathing: ${Math.round(rr)} rpm`  : ' Breathing: —';
-      document.getElementById('hrv-pill').childNodes[document.getElementById('hrv-pill').childNodes.length - 1].textContent = hrv ? ` HRV: ${Math.round(hrv)} ms`        : ' HRV: —';
+      document.getElementById('hr-pill').textContent  = hr  ? `HR: ${Math.round(hr)} bpm`        : 'HR: —';
+      document.getElementById('rr-pill').textContent  = rr  ? `Breathing: ${Math.round(rr)} rpm`  : 'Breathing: —';
+      document.getElementById('hrv-pill').textContent = hrv ? `HRV: ${Math.round(hrv)} ms`        : 'HRV: —';
       document.getElementById('vitals-result').classList.remove('hidden');
       document.getElementById('scanner-container').classList.add('hidden');
-      btn.textContent = '✓ Vitals captured — scan again?';
-      btn.disabled = false;
+      document.getElementById('scan-btn').textContent = 'Vitals captured — rescan?';
+      document.getElementById('scan-btn').disabled = false;
     });
-
     scanner.addEventListener('error', () => {
       document.getElementById('scanner-container').classList.add('hidden');
-      btn.textContent = 'Scan failed — try again';
-      btn.disabled = false;
+      document.getElementById('scan-btn').textContent = 'Scan failed — try again';
+      document.getElementById('scan-btn').disabled = false;
     });
   }
 
+  async function loadPrivacy() {
+    try {
+      const res = await fetch('/api/privacy');
+      const data = await res.json();
+      const pv = (data && data.partner_view) ? data.partner_view : {};
+      document.getElementById("pv_scores").checked   = pv.checkin_scores  !== undefined ? !!pv.checkin_scores  : true;
+      document.getElementById("pv_notes").checked    = pv.notes           !== undefined ? !!pv.notes           : false;
+      document.getElementById("pv_ml").checked       = pv.ml_insights     !== undefined ? !!pv.ml_insights     : true;
+      document.getElementById("pv_playbook").checked = pv.playbook        !== undefined ? !!pv.playbook        : true;
+      document.getElementById("pv_weekly").checked   = pv.weekly          !== undefined ? !!pv.weekly          : true;
+      document.getElementById("pv_silence").checked  = pv.silence_alert   !== undefined ? !!pv.silence_alert   : true;
+    } catch (e) {}
+  }
+
+  async function savePrivacy() {
+    const partner_view = {
+      checkin_scores: document.getElementById("pv_scores").checked,
+      notes:          document.getElementById("pv_notes").checked,
+      ml_insights:    document.getElementById("pv_ml").checked,
+      playbook:       document.getElementById("pv_playbook").checked,
+      weekly:         document.getElementById("pv_weekly").checked,
+      silence_alert:  document.getElementById("pv_silence").checked
+    };
+    await fetch('/api/privacy', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ partner_view })
+    });
+    const msg = document.getElementById('privacySavedMsg');
+    msg.style.display = 'inline';
+    setTimeout(() => msg.style.display = 'none', 1500);
+  }
+
+  document.getElementById("savePrivacyBtn").addEventListener("click", savePrivacy);
+  loadPrivacy();
+
   document.getElementById('checkin-form').addEventListener('submit', async e => {
     e.preventDefault();
-    if (Object.values(vals).some(v => v === null)) {
-      alert('Please answer all four questions before submitting.');
-      return;
-    }
+    if (Object.values(vals).some(v => v === null)) { alert('Please answer all four questions'); return; }
     await fetch('/api/checkin', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -366,10 +401,9 @@
     Object.keys(vals).forEach(k => vals[k] = null);
     window.scannedVitals = { heart_rate: null, hrv: null, breathing_rate: null };
     document.getElementById('vitals-result').classList.add('hidden');
-    document.getElementById('scan-btn').textContent = 'Start Vital Scan';
+    document.getElementById('scan-btn').textContent = 'Scan Vitals';
     document.getElementById('scan-btn').disabled = false;
   }
 </script>
-
 </body>
 </html>
