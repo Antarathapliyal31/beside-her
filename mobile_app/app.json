@@ -1,0 +1,38 @@
+{
+  "expo": {
+    "name": "Beside Her",
+    "slug": "beside-her",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./src/assets/icon.png",
+    "userInterfaceStyle": "light",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.besideher.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Beside Her uses the camera to measure vital signs like heart rate and breathing rate using Presage SmartSpectra SDK."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#FDF5F0"
+      },
+      "package": "com.besideher.app",
+      "permissions": [
+        "CAMERA"
+      ]
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow Beside Her to access your camera for contactless vital sign measurement."
+        }
+      ],
+      "expo-asset"
+    ]
+  }
+}
