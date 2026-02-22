@@ -6,3 +6,5 @@ scikit-learn
 numpy
 gunicorn
 httpx
+vitallens
+imageio[ffmpeg]
