@@ -873,23 +873,51 @@ def get_profile():
 
 
 
-@app.route("/api/vitallens-proxy", methods=["POST"])
-def vitallens_proxy():
-    api_key = os.getenv("VITALLENS_API_KEY")
-    data = request.get_data()
-    headers = {
-        "Content-Type": request.content_type,
-        "x-api-key": api_key
-    }
-    response = httpx.post(
-        "https://api.rouast.com/vitallens-v3/stream",
-        content=data,
-        headers=headers
-    )
-    return response.content, response.status_code, {
-        "Content-Type": response.headers.get("Content-Type", "application/json"),
-        "Access-Control-Allow-Origin": "*"
-    }
+@app.route("/api/scan-vitals", methods=["POST"])
+def scan_vitals():
+    """Receive a short video from the browser and run VitalLens pos method locally."""
+    import tempfile, uuid, os as _os
+    try:
+        from vitallens import VitalLens
+    except ImportError:
+        return jsonify({"error": "vitallens not installed"}), 500
+
+    video_file = request.files.get("video")
+    if not video_file:
+        return jsonify({"error": "No video file received"}), 400
+
+    # Save to a temp file
+    ext = ".webm"
+    tmp_path = _os.path.join(tempfile.gettempdir(), f"scan_{uuid.uuid4().hex}{ext}")
+    try:
+        video_file.save(tmp_path)
+
+        # Run VitalLens locally — no API key needed
+        vl = VitalLens(method="pos")
+        results = vl(tmp_path)
+
+        if not results or len(results) == 0:
+            return jsonify({"error": "No face detected — ensure good lighting and face the camera"}), 422
+
+        vital_signs = results[0].get("vital_signs", {})
+        hr  = vital_signs.get("heart_rate", {}).get("value")
+        hrv = vital_signs.get("hrv_sdnn",   {}).get("value")
+        rr  = vital_signs.get("respiratory_rate", {}).get("value")
+
+        return jsonify({
+            "heart_rate":    round(hr)  if hr  else None,
+            "hrv":           round(hrv) if hrv else None,
+            "breathing_rate": round(rr) if rr  else None,
+        })
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    finally:
+        try:
+            _os.remove(tmp_path)
+        except Exception:
+            pass
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5000)

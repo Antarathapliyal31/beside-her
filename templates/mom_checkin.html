@@ -5,112 +5,136 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Beside Her – Check In</title>
   <link rel="stylesheet" href="/static/css/style.css"/>
-  <script type="module" src="https://cdn.jsdelivr.net/npm/vitallens/dist/vitallens.browser.js"></script>
+  <!-- vitallens web component removed — using server-side pos scan instead -->
   <style>
     .vitals-section {
-      background: var(--white);
+      background: #fff;
       border-radius: 14px;
       padding: 18px 20px;
       margin: 16px 0;
-      border: 1px solid var(--border);
+      border: 1px solid #f0e8e0;
     }
-    .vitals-header { display: flex; flex-direction: column; gap: 3px; margin-bottom: 14px; }
-    .vitals-header span:first-child { font-weight: 600; color: var(--navy); font-size: 0.95rem; }
-    .vitals-sub { font-size: 0.8rem; color: var(--muted); }
-
+    .vitals-header {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      margin-bottom: 14px;
+    }
+    .vitals-header span:first-child {
+      font-weight: 600;
+      color: #2d1f1f;
+      font-size: 0.95rem;
+    }
+    .vitals-sub {
+      font-size: 0.8rem;
+      color: #aaa;
+    }
     .scan-btn {
-      background: var(--teal);
+      background: #6b3f6b;
       color: #fff;
       border: none;
-      border-radius: 100px;
+      border-radius: 10px;
       padding: 10px 20px;
       font-size: 0.9rem;
       cursor: pointer;
       width: 100%;
-      font-family: 'Inter', sans-serif;
-      font-weight: 600;
-      transition: all 0.2s;
-      box-shadow: 0 2px 10px rgba(45,143,143,0.3);
+      font-family: inherit;
     }
-    .scan-btn:hover { background: var(--teal2); transform: translateY(-1px); }
-    .scan-btn:disabled { background: var(--border); cursor: not-allowed; transform: none; box-shadow: none; }
-
-    .vitals-result { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+    .scan-btn:hover { background: #5a335a; }
+    .scan-btn:disabled { background: #ccc; cursor: not-allowed; }
+    .vitals-result {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
     .vital-pill {
-      background: rgba(45,143,143,0.08);
-      border: 1px solid rgba(45,143,143,0.25);
+      background: #fdf5f0;
+      border: 1px solid #f0ddd0;
       border-radius: 20px;
       padding: 6px 14px;
       font-size: 0.85rem;
-      color: var(--teal);
-      font-weight: 500;
+      color: #7a4f3a;
     }
-    #scanner-container { margin-top: 14px; }
+    #scanner-container {
+      margin-top: 14px;
+    }
 
-    /* Privacy */
+    /* ✅ Privacy UI styles */
     .privacy-section {
-      background: var(--white);
+      background: #fff;
       border-radius: 14px;
       padding: 18px 20px;
       margin: 16px 0;
-      border: 1px solid var(--border);
+      border: 1px solid #f0e8e0;
     }
-    .privacy-header { display: flex; flex-direction: column; gap: 3px; margin-bottom: 12px; }
-    .privacy-header span:first-child { font-weight: 600; color: var(--navy); font-size: 0.95rem; }
-    .privacy-sub { font-size: 0.8rem; color: var(--muted); }
-
-    .privacy-list { display: grid; gap: 10px; margin-top: 10px; margin-bottom: 14px; }
-
+    .privacy-header {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      margin-bottom: 12px;
+    }
+    .privacy-header span:first-child {
+      font-weight: 600;
+      color: #2d1f1f;
+      font-size: 0.95rem;
+    }
+    .privacy-sub {
+      font-size: 0.8rem;
+      color: #aaa;
+    }
+    .privacy-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 10px;
+      margin-bottom: 12px;
+    }
     .privacy-item {
       display: flex;
       align-items: flex-start;
-      gap: 12px;
-      padding: 12px 14px;
+      gap: 10px;
+      padding: 10px 12px;
       border-radius: 12px;
-      border: 1px solid var(--border);
-      background: var(--bg);
-      cursor: pointer;
-      transition: border-color 0.2s, background 0.2s;
+      border: 1px solid #f2e7df;
+      background: #fffaf6;
     }
-    .privacy-item:hover { border-color: var(--teal); background: rgba(45,143,143,0.04); }
-
-    .privacy-item input[type="checkbox"] {
-      width: 16px; height: 16px;
-      margin-top: 2px;
-      accent-color: var(--teal);
-      flex-shrink: 0;
+    .privacy-item input {
+      margin-top: 3px;
     }
-    .privacy-item .title { font-weight: 600; font-size: 0.9rem; color: var(--navy); line-height: 1.2; }
-    .privacy-item .desc  { font-size: 0.82rem; color: var(--muted); margin-top: 3px; line-height: 1.4; }
-
-    .privacy-actions { display: flex; gap: 12px; align-items: center; }
-
+    .privacy-item .title {
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: #2d1f1f;
+      line-height: 1.2;
+    }
+    .privacy-item .desc {
+      font-size: 0.82rem;
+      color: #7a6b66;
+      margin-top: 3px;
+    }
+    .privacy-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
     .privacy-save-btn {
-      background: var(--teal);
+      background: #6b3f6b;
       color: #fff;
       border: none;
-      border-radius: 100px;
-      padding: 10px 20px;
+      border-radius: 10px;
+      padding: 10px 16px;
       font-size: 0.9rem;
-      font-weight: 600;
       cursor: pointer;
-      font-family: 'Inter', sans-serif;
+      font-family: inherit;
       flex: 1;
-      transition: all 0.2s;
-      box-shadow: 0 2px 10px rgba(45,143,143,0.3);
     }
-    .privacy-save-btn:hover { background: var(--teal2); transform: translateY(-1px); }
-
-    .privacy-saved { font-size: 0.85rem; color: var(--teal); font-weight: 600; display: none; white-space: nowrap; }
-
-    .checkin-icon-wrap {
-      width: 52px; height: 52px;
-      background: rgba(45,143,143,0.1);
-      border-radius: 14px;
-      display: flex; align-items: center; justify-content: center;
-      margin: 0 auto 14px;
+    .privacy-save-btn:hover { background: #5a335a; }
+    .privacy-saved {
+      font-size: 0.85rem;
+      color: #2c7a4b;
+      display: none;
+      white-space: nowrap;
     }
-    .checkin-icon-wrap svg { width: 28px; height: 28px; color: var(--teal); stroke: var(--teal); }
   </style>
 </head>
 <body>
@@ -127,17 +151,18 @@
 <div class="page">
   <div class="checkin-card">
 
+    <!-- Header -->
     <div class="checkin-header">
-      <div class="checkin-icon-wrap">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z"/>
-        </svg>
-      </div>
+      <div class="checkin-icon">🌸</div>
       <h2>How are you feeling today?</h2>
-      <div class="time-badge">60 seconds</div>
-      <p class="checkin-sub">No right or wrong answers. Your partner will know exactly how to show up for you.</p>
+      <div class="time-badge">⏱ 60 seconds</div>
+      <p class="checkin-sub">
+        No right or wrong answers.
+        Your partner will know exactly how to show up for you.
+      </p>
     </div>
 
+    <!-- Form -->
     <form id="checkin-form">
 
       <div class="form-group">
@@ -190,111 +215,143 @@
       </div>
 
       <div class="form-group">
-        <label>Anything your partner should know? <span class="optional">(optional)</span></label>
-        <textarea id="notes" rows="3" placeholder="I've been feeling… / I could really use… / Today was hard because…"></textarea>
+        <label>
+          Anything your partner should know?
+          <span class="optional">(optional)</span>
+        </label>
+        <textarea
+          id="notes"
+          rows="3"
+          placeholder="I've been feeling… / I could really use… / Today was hard because…">
+        </textarea>
       </div>
 
-      <!-- Privacy Settings -->
+      <!-- ✅ Privacy settings -->
       <div class="privacy-section">
         <div class="privacy-header">
-          <span>Privacy Settings</span>
+          <span>🔒 Privacy settings</span>
           <span class="privacy-sub">You decide what your partner can see. You can change this anytime.</span>
         </div>
+
         <div class="privacy-list">
           <label class="privacy-item">
             <input type="checkbox" id="pv_scores">
             <div>
               <div class="title">Share check-in scores</div>
-              <div class="desc">Mood, anxiety, energy and sleep ratings</div>
+              <div class="desc">Mood, anxiety, energy, sleep ratings</div>
             </div>
           </label>
+
           <label class="privacy-item">
             <input type="checkbox" id="pv_notes">
             <div>
               <div class="title">Share notes</div>
-              <div class="desc">The message you type above for your partner</div>
+              <div class="desc">The text you type above (“Anything your partner should know?”)</div>
             </div>
           </label>
+
           <label class="privacy-item">
             <input type="checkbox" id="pv_ml">
             <div>
               <div class="title">Share ML insights</div>
-              <div class="desc">Trends, flags, patterns and support-needed score</div>
+              <div class="desc">Trends, flags, patterns, and support-needed score</div>
             </div>
           </label>
+
           <label class="privacy-item">
             <input type="checkbox" id="pv_playbook">
             <div>
-              <div class="title">Share today's guidance</div>
+              <div class="title">Share today’s guidance</div>
               <div class="desc">The action plan your partner sees on their dashboard</div>
             </div>
           </label>
+
           <label class="privacy-item">
             <input type="checkbox" id="pv_weekly">
             <div>
               <div class="title">Share weekly report</div>
-              <div class="desc">A weekly summary and action plan sent to your partner</div>
+              <div class="desc">A weekly summary and action plan</div>
             </div>
           </label>
+
           <label class="privacy-item">
             <input type="checkbox" id="pv_silence">
             <div>
               <div class="title">Allow silence alerts</div>
-              <div class="desc">If you don't check in for 2+ days, your partner gets a gentle nudge</div>
+              <div class="desc">If you don’t check in for 2+ days, your partner gets a gentle alert</div>
             </div>
           </label>
         </div>
+
         <div class="privacy-actions">
-          <button type="button" class="privacy-save-btn" id="savePrivacyBtn">Save Privacy Settings</button>
-          <span class="privacy-saved" id="privacySavedMsg">Saved ✓</span>
+          <button type="button" class="privacy-save-btn" id="savePrivacyBtn">Save privacy settings</button>
+          <span class="privacy-saved" id="privacySavedMsg">Saved ✅</span>
         </div>
       </div>
 
-      <!-- VitalLens Scanner -->
+      <!-- Vitals Scanner (server-side pos, no API key) -->
       <div class="vitals-section">
         <div class="vitals-header">
           <span>Scan your vitals</span>
-          <span class="vitals-sub">Optional — 30-second camera scan for heart rate & breathing</span>
+          <span class="vitals-sub">Optional — 30-second camera scan for heart rate</span>
         </div>
+
         <div id="vitals-result" class="vitals-result hidden">
           <div class="vital-pill" id="hr-pill">HR: —</div>
-          <div class="vital-pill" id="rr-pill">Breathing: —</div>
-          <div class="vital-pill" id="hrv-pill">HRV: —</div>
         </div>
-        <button type="button" class="scan-btn" id="scan-btn" onclick="startScan()">Scan Vitals</button>
-        <div id="scanner-container" class="hidden">
-          <vitallens-vitals-scan
-            id="vl-scanner"
-            method="pos"
-            api-key="cBF3KKhUiK1fKJmYST6JW9v6sxFpkPpY5elywPcr"
-            min-face-size="0.1"
-            camera-facing="user"
-          ></vitallens-vitals-scan>
+
+        <button type="button" class="scan-btn" id="scan-btn" onclick="startScan()">
+          Scan Vitals
+        </button>
+
+        <!-- Live camera preview + countdown -->
+        <div id="scanner-container" style="display:none; margin-top:14px; text-align:center;">
+          <video id="cam-preview" autoplay muted playsinline
+            style="width:100%; max-width:320px; border-radius:12px; background:#000;"></video>
+          <div id="scan-countdown"
+            style="margin-top:8px; font-size:1.1rem; font-weight:600; color:var(--teal);">
+            Hold still — 30s
+          </div>
+          <div style="font-size:0.78rem; color:var(--muted); margin-top:4px;">
+            Face the camera in good lighting
+          </div>
         </div>
       </div>
 
-      <button type="submit" class="submit-btn">Send to My Partner</button>
+      <button type="submit" class="submit-btn">
+        Send to My Partner 💌
+      </button>
 
     </form>
 
     <!-- Success screen -->
     <div id="success" class="success-msg hidden">
-      <span class="success-icon">✓</span>
+      <span class="success-icon">💌</span>
       <h3>Your partner knows</h3>
-      <p>They'll see your check-in and get personalised guidance on how to show up for you today.</p>
-      <button onclick="resetForm()" class="reset-btn">Log another day</button>
+      <p>
+        They'll see your check-in and get personalised
+        guidance on how to show up for you today.
+      </p>
+      <button onclick="resetForm()" class="reset-btn">
+        Log another day
+      </button>
     </div>
 
   </div>
 </div>
 
 <script>
-  const today = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+  // ── Date setup ────────────────────────────────
+  const today = new Date(
+    new Date().getTime() - new Date().getTimezoneOffset() * 60000
+  ).toISOString().slice(0, 10);
   document.getElementById("date").value = today;
   document.getElementById("date").max   = today;
   document.getElementById("date").min   = today;
 
+  // ── Emoji selections ──────────────────────────
   const vals = { mood: null, anxiety: null, energy: null, sleep_quality: null };
+
   document.querySelectorAll('.emoji-scale').forEach(scale => {
     scale.querySelectorAll('.e-btn').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -305,63 +362,124 @@
     });
   });
 
+  // ── Vitals scan (MediaRecorder → Flask → VitalLens pos) ──────
   window.scannedVitals = { heart_rate: null, hrv: null, breathing_rate: null };
+  let mediaRecorder = null, mediaStream = null;
 
-  function startScan() {
-    document.getElementById('scanner-container').classList.remove('hidden');
-    document.getElementById('scan-btn').textContent = 'Scanning… stay still';
-    document.getElementById('scan-btn').disabled = true;
-    const scanner = document.getElementById('vl-scanner');
-    scanner.addEventListener('vitals', (e) => {
-      const v = e.detail?.vital_signs || e.detail;
-      if (!v) return;
-      const hr = v.heart_rate?.value, rr = v.respiratory_rate?.value, hrv = v.hrv_sdnn?.value;
-      window.scannedVitals.heart_rate     = hr  ? Math.round(hr)  : null;
-      window.scannedVitals.breathing_rate = rr  ? Math.round(rr)  : null;
-      window.scannedVitals.hrv            = hrv ? Math.round(hrv) : null;
-      document.getElementById('hr-pill').textContent  = hr  ? `HR: ${Math.round(hr)} bpm`        : 'HR: —';
-      document.getElementById('rr-pill').textContent  = rr  ? `Breathing: ${Math.round(rr)} rpm`  : 'Breathing: —';
-      document.getElementById('hrv-pill').textContent = hrv ? `HRV: ${Math.round(hrv)} ms`        : 'HRV: —';
-      document.getElementById('vitals-result').classList.remove('hidden');
-      document.getElementById('scanner-container').classList.add('hidden');
-      document.getElementById('scan-btn').textContent = 'Vitals captured — rescan?';
-      document.getElementById('scan-btn').disabled = false;
-    });
-    scanner.addEventListener('error', () => {
-      document.getElementById('scanner-container').classList.add('hidden');
-      document.getElementById('scan-btn').textContent = 'Scan failed — try again';
-      document.getElementById('scan-btn').disabled = false;
-    });
+  async function startScan() {
+    const btn       = document.getElementById('scan-btn');
+    const container = document.getElementById('scanner-container');
+    const preview   = document.getElementById('cam-preview');
+    const countdown = document.getElementById('scan-countdown');
+
+    btn.disabled = true;
+    btn.textContent = 'Starting camera…';
+
+    try {
+      mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+    } catch (err) {
+      btn.disabled = false;
+      btn.textContent = 'Camera access denied — try again';
+      return;
+    }
+
+    preview.srcObject = mediaStream;
+    container.style.display = 'block';
+    btn.textContent = 'Scanning…';
+
+    // Record 30 seconds
+    const chunks = [];
+    const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp8')
+      ? 'video/webm;codecs=vp8' : 'video/webm';
+    mediaRecorder = new MediaRecorder(mediaStream, { mimeType });
+    mediaRecorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+
+    mediaRecorder.onstop = async () => {
+      // Stop camera
+      mediaStream.getTracks().forEach(t => t.stop());
+      container.style.display = 'none';
+      btn.textContent = 'Analysing…';
+
+      const blob = new Blob(chunks, { type: mimeType });
+      const formData = new FormData();
+      formData.append('video', blob, 'scan.webm');
+
+      try {
+        const res  = await fetch('/api/scan-vitals', { method: 'POST', body: formData });
+        const data = await res.json();
+
+        if (data.error) {
+          btn.textContent = 'Scan failed — ' + data.error;
+          btn.disabled = false;
+          return;
+        }
+
+        window.scannedVitals.heart_rate    = data.heart_rate;
+        window.scannedVitals.hrv           = data.hrv;
+        window.scannedVitals.breathing_rate = data.breathing_rate;
+
+        document.getElementById('hr-pill').textContent =
+          data.heart_rate ? `HR: ${data.heart_rate} bpm` : 'HR: —';
+
+        document.getElementById('vitals-result').classList.remove('hidden');
+        btn.textContent = 'Vitals captured — rescan?';
+        btn.disabled = false;
+
+      } catch (err) {
+        btn.textContent = 'Scan failed — try again';
+        btn.disabled = false;
+      }
+    };
+
+    // Countdown 30s then stop
+    let secs = 30;
+    countdown.textContent = `Hold still — ${secs}s`;
+    mediaRecorder.start();
+
+    const timer = setInterval(() => {
+      secs--;
+      countdown.textContent = secs > 0 ? `Hold still — ${secs}s` : 'Processing…';
+      if (secs <= 0) {
+        clearInterval(timer);
+        mediaRecorder.stop();
+      }
+    }, 1000);
   }
 
+  // ✅ Privacy: load + save settings
   async function loadPrivacy() {
     try {
       const res = await fetch('/api/privacy');
       const data = await res.json();
       const pv = (data && data.partner_view) ? data.partner_view : {};
-      document.getElementById("pv_scores").checked   = pv.checkin_scores  !== undefined ? !!pv.checkin_scores  : true;
-      document.getElementById("pv_notes").checked    = pv.notes           !== undefined ? !!pv.notes           : false;
-      document.getElementById("pv_ml").checked       = pv.ml_insights     !== undefined ? !!pv.ml_insights     : true;
-      document.getElementById("pv_playbook").checked = pv.playbook        !== undefined ? !!pv.playbook        : true;
-      document.getElementById("pv_weekly").checked   = pv.weekly          !== undefined ? !!pv.weekly          : true;
-      document.getElementById("pv_silence").checked  = pv.silence_alert   !== undefined ? !!pv.silence_alert   : true;
-    } catch (e) {}
+
+      document.getElementById("pv_scores").checked  = (pv.checkin_scores !== undefined) ? !!pv.checkin_scores : true;
+      document.getElementById("pv_notes").checked   = (pv.notes !== undefined) ? !!pv.notes : false;
+      document.getElementById("pv_ml").checked      = (pv.ml_insights !== undefined) ? !!pv.ml_insights : true;
+      document.getElementById("pv_playbook").checked= (pv.playbook !== undefined) ? !!pv.playbook : true;
+      document.getElementById("pv_weekly").checked  = (pv.weekly !== undefined) ? !!pv.weekly : true;
+      document.getElementById("pv_silence").checked = (pv.silence_alert !== undefined) ? !!pv.silence_alert : true;
+    } catch (e) {
+      // If privacy fetch fails, keep defaults checked
+    }
   }
 
   async function savePrivacy() {
     const partner_view = {
       checkin_scores: document.getElementById("pv_scores").checked,
-      notes:          document.getElementById("pv_notes").checked,
-      ml_insights:    document.getElementById("pv_ml").checked,
-      playbook:       document.getElementById("pv_playbook").checked,
-      weekly:         document.getElementById("pv_weekly").checked,
-      silence_alert:  document.getElementById("pv_silence").checked
+      notes: document.getElementById("pv_notes").checked,
+      ml_insights: document.getElementById("pv_ml").checked,
+      playbook: document.getElementById("pv_playbook").checked,
+      weekly: document.getElementById("pv_weekly").checked,
+      silence_alert: document.getElementById("pv_silence").checked
     };
+
     await fetch('/api/privacy', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ partner_view })
     });
+
     const msg = document.getElementById('privacySavedMsg');
     msg.style.display = 'inline';
     setTimeout(() => msg.style.display = 'none', 1500);
@@ -370,34 +488,44 @@
   document.getElementById("savePrivacyBtn").addEventListener("click", savePrivacy);
   loadPrivacy();
 
+  // ── Form submit ───────────────────────────────
   document.getElementById('checkin-form').addEventListener('submit', async e => {
     e.preventDefault();
-    if (Object.values(vals).some(v => v === null)) { alert('Please answer all four questions'); return; }
+
+    if (Object.values(vals).some(v => v === null)) {
+      alert('Please answer all four questions 🙂');
+      return;
+    }
+
     await fetch('/api/checkin', {
-      method: 'POST',
+      method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        date: document.getElementById('date').value,
-        notes: document.getElementById('notes').value,
-        heart_rate: window.scannedVitals.heart_rate,
-        hrv: window.scannedVitals.hrv,
+        date:          document.getElementById('date').value,
+        notes:         document.getElementById('notes').value,
+        heart_rate:    window.scannedVitals.heart_rate,
+        hrv:           window.scannedVitals.hrv,
         breathing_rate: window.scannedVitals.breathing_rate,
         ...vals
       })
     });
+
     document.getElementById('checkin-form').classList.add('hidden');
     document.getElementById('success').classList.remove('hidden');
   });
 
+  // ── Reset ─────────────────────────────────────
   function resetForm() {
     document.getElementById('checkin-form').classList.remove('hidden');
     document.getElementById('success').classList.add('hidden');
     document.querySelectorAll('.e-btn').forEach(b => b.classList.remove('selected'));
     document.getElementById('notes').value = '';
-    const t = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+    const t = new Date(
+      new Date().getTime() - new Date().getTimezoneOffset() * 60000
+    ).toISOString().slice(0, 10);
     document.getElementById('date').value = t;
-    document.getElementById('date').max = t;
-    document.getElementById('date').min = t;
+    document.getElementById('date').max   = t;
+    document.getElementById('date').min   = t;
     Object.keys(vals).forEach(k => vals[k] = null);
     window.scannedVitals = { heart_rate: null, hrv: null, breathing_rate: null };
     document.getElementById('vitals-result').classList.add('hidden');
@@ -405,5 +533,6 @@
     document.getElementById('scan-btn').disabled = false;
   }
 </script>
+
 </body>
 </html>
