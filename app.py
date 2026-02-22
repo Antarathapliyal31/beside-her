@@ -6,7 +6,15 @@ import json
 import secrets
 from datetime import datetime, date
 
+from google import genai
+from mlanalysis import run_full_analysis as run_analysis
+
 load_dotenv()
+
+gemini = genai.Client(
+    api_key=os.getenv("GEMINI_API_KEY"),
+    http_options={"api_version": "v1"}
+)
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "beside-her-secret-2026")
@@ -192,23 +200,260 @@ def missed_days():
 
 @app.route("/api/digest")
 def get_digest():
-    return jsonify({
-        "ready":   False,
-        "message": "ML layer coming soon"
-    })
+    mom_id   = get_mom_id()
+    baby_dob = session.get("baby_dob")
 
-@app.route("/api/weekly")
-def get_weekly():
-    return jsonify({
-        "ready":   False,
-        "message": "Weekly report coming soon"
-    })
+    if not mom_id:
+        return jsonify({"ready": False, "message": "Not logged in"})
+
+    rows = supabase.table("checkins")\
+        .select("*")\
+        .eq("user_id", mom_id)\
+        .order("date", desc=True)\
+        .limit(45)\
+        .execute().data
+
+    obs = supabase.table("observations")\
+        .select("*")\
+        .eq("user_id", mom_id)\
+        .order("date", desc=True)\
+        .limit(5)\
+        .execute().data
+
+    analysis = run_analysis(rows, baby_dob)
+
+    # ── Normalize run_full_analysis() output ──────────────
+    if analysis.get("ready_for_ml"):
+        sv = analysis.get("severity", {})
+        tr = analysis.get("trends") or {}
+        fl = analysis.get("flags") or {}
+        pt = analysis.get("patterns") or {}
+        ph = analysis.get("phase") or {}
+
+        analysis["ready"]    = True
+        analysis["level"]    = analysis.get("escalation", "green")
+        analysis["severity"] = sv.get("score", 0) if isinstance(sv, dict) else sv
+
+        analysis["stats"] = {
+            "mood":    {"avg": sv.get("mood_avg", 0)},
+            "anxiety": {"avg": sv.get("anxiety_avg", 0)},
+            "energy":  {"avg": sv.get("energy_avg", 0)},
+            "sleep":   {"avg": sv.get("sleep_avg", 0)},
+        }
+
+        analysis["trends"] = {
+            "mood_trend":    tr.get("mood", {}).get("trend", "stable") if isinstance(tr.get("mood"), dict) else "stable",
+            "anxiety_trend": tr.get("anxiety", {}).get("trend", "stable") if isinstance(tr.get("anxiety"), dict) else "stable",
+            "energy_trend":  tr.get("energy", {}).get("trend", "stable") if isinstance(tr.get("energy"), dict) else "stable",
+        }
+
+        analysis["flags"] = [
+            {"message": f, "level": "warn"}
+            for f in fl.get("flags", [])
+        ]
+        if fl.get("crisis_override"):
+            analysis["flags"].append({"message": "Crisis language detected", "level": "urgent"})
+
+        analysis["clusters"]  = {"dominant": pt.get("dominant_pattern", "mixed")}
+        analysis["reasons"]   = sv.get("reasons", []) if isinstance(sv, dict) else []
+        analysis["weeks"]     = ph.get("weeks", 0)
+        analysis["phase"]     = ph.get("phase", "unknown")
+    else:
+        analysis["ready"] = False
+
+    if not analysis["ready"]:
+        return jsonify({
+            "ready":      False,
+            "confidence": analysis.get("confidence", {}),
+            "message":    "Not enough data yet — encourage daily check-ins"
+        })
+
+    obs_text = ""
+    if obs:
+        lines = []
+        for o in obs:
+            signals = o.get("signals", "[]")
+            try:
+                signals = ", ".join(json.loads(signals))
+            except:
+                pass
+            lines.append(
+                f"- {o['date']}: {signals}"
+                f"{' — ' + o['note'] if o.get('note') else ''}"
+            )
+        obs_text = "Partner also observed:\n" + "\n".join(lines)
+
+    phase_context = {
+        "baby_blues":    "Week 1-2. Baby blues are normal. Normalize feelings but stay close.",
+        "watch_closely": "Past week 2. Symptoms persisting this long need attention. Gently flag professional support.",
+        "ppd_risk":      "Week 9+. Persistent symptoms at this stage are serious. Professional support is urgent.",
+        "unknown":       "Postpartum stage unknown."
+    }.get(analysis["phase"], "")
+
+    prompt = f"""
+You are a postpartum support guide writing to a partner.
+Be warm, specific, and actionable. Never generic.
+
+ML ANALYSIS:
+- Severity: {analysis['severity']}/10
+- Escalation: {analysis['level'].upper()}
+- Mood avg: {analysis['stats']['mood']['avg']}/5 — {analysis['trends']['mood_trend']}
+- Anxiety avg: {analysis['stats']['anxiety']['avg']}/5 — {analysis['trends']['anxiety_trend']}
+- Energy avg: {analysis['stats']['energy']['avg']}/5
+- Sleep avg: {analysis['stats']['sleep']['avg']}/5
+- Pattern: mostly {analysis['clusters']['dominant']} days
+- Weeks postpartum: {analysis['weeks']}
+- Phase: {phase_context}
+- Flags: {', '.join([f['message'] for f in analysis['flags']]) or 'none'}
+- Why score is high: {'; '.join(analysis['reasons']) or 'n/a'}
+
+{obs_text}
+
+Return ONLY a valid JSON object, no markdown, no explanation:
+{{
+  "action_2min": "One specific 2-minute action right now",
+  "action_15min": "One specific 15-minute action today",
+  "action_60min": "One specific 60-minute action today",
+  "avoid": "One specific thing NOT to say or do and exactly why",
+  "conversation_starter": "One gentle open question to ask her",
+  "ready_to_send": "Exact text message they can copy and send to her",
+  "summary": "Two sentences about how she is doing this week"
+}}
+
+Rules:
+- If energy avg < 3, action_15min must involve food or preparing a meal
+- If anxiety avg > 3, action_60min must involve calm or rest
+- Never write generic advice like 'be supportive'
+- Base everything on her actual ML data above
+"""
+
+    try:
+        response = gemini.models.generate_content(model="gemini-2.5-flash-lite",contents=prompt)
+        text = response.text.strip()
+        if text.startswith("```"):
+            text = text.split("```")[1]
+            if text.startswith("json"):
+                text = text[4:]
+        playbook = json.loads(text.strip())
+
+        return jsonify({
+            "ready":    True,
+            "playbook": playbook,
+            "analysis": {
+                "severity":   analysis["severity"],
+                "level":      analysis["level"],
+                "trends":     analysis["trends"],
+                "clusters":   analysis["clusters"],
+                "flags":      analysis["flags"],
+                "reasons":    analysis["reasons"],
+                "confidence": analysis["confidence"],
+                "weeks":      analysis["weeks"],
+                "phase":      analysis["phase"],
+                "stats":      analysis["stats"],
+            }
+        })
+
+    except Exception as e:
+        return jsonify({"ready": False, "message": f"AI error: {str(e)}"})
+
 
 @app.route("/api/chat", methods=["POST"])
 def chat_api():
-    return jsonify({
-        "response": "AI chat coming soon"
-    })
+    mom_id   = get_mom_id()
+    baby_dob = session.get("baby_dob")
+    message  = request.json.get("message", "")
+
+    if not mom_id or not message:
+        return jsonify({"response": "Please log in first."})
+
+    rows = supabase.table("checkins")\
+        .select("*")\
+        .eq("user_id", mom_id)\
+        .order("date", desc=True)\
+        .limit(45)\
+        .execute().data
+
+    analysis = run_analysis(rows, baby_dob_str=baby_dob)
+
+    if analysis["ready"]:
+        context = (
+            f"Severity: {analysis['severity']}/10, Level: {analysis['level']}, "
+            f"Mood: {analysis['stats']['mood']['avg']}/5 ({analysis['trends']['mood_trend']}), "
+            f"Anxiety: {analysis['stats']['anxiety']['avg']}/5, "
+            f"Weeks postpartum: {analysis['weeks']}, Phase: {analysis['phase']}"
+        )
+    else:
+        context = "Less than 3 check-ins — limited data available."
+
+    prompt = f"""
+You are a warm postpartum support guide helping a partner.
+Her current data: {context}
+Partner asks: {message}
+Answer warmly and specifically. Under 150 words.
+If severity is high (7+), gently mention professional support.
+Never give generic advice.
+"""
+    try:
+        response = gemini.models.generate_content(model="gemini-2.5-flash-lite",contents=prompt)
+        return jsonify({"response": response.text.strip()})
+    except Exception as e:
+        return jsonify({"response": f"Error: {str(e)}"})
+
+
+@app.route("/api/weekly")
+def get_weekly():
+    mom_id   = get_mom_id()
+    baby_dob = session.get("baby_dob")
+
+    if not mom_id:
+        return jsonify({"ready": False})
+
+    rows = supabase.table("checkins")\
+        .select("*")\
+        .eq("user_id", mom_id)\
+        .order("date", desc=True)\
+        .limit(7)\
+        .execute().data
+
+    analysis = run_analysis(rows, baby_dob_str=baby_dob)
+
+    if not analysis["ready"]:
+        return jsonify({"ready": False, "message": "Not enough data"})
+
+    prompt = f"""
+Write a weekly postpartum support report for a partner.
+Severity: {analysis['severity']}/10, Level: {analysis['level']}
+Mood: {analysis['stats']['mood']['avg']}/5 ({analysis['trends']['mood_trend']}),
+Anxiety: {analysis['stats']['anxiety']['avg']}/5, Energy: {analysis['stats']['energy']['avg']}/5,
+Sleep: {analysis['stats']['sleep']['avg']}/5, Pattern: {analysis['clusters']['dominant']} days,
+Weeks postpartum: {analysis['weeks']},
+Flags: {', '.join([f['message'] for f in analysis['flags']]) or 'none'}
+
+Return ONLY valid JSON:
+{{
+  "week_summary": "3 sentences about her week",
+  "biggest_challenge": "The main thing she struggled with",
+  "what_worked": "Any positive signals",
+  "next_week_focus": "One key focus for next week",
+  "action_plan": ["action 1", "action 2", "action 3"],
+  "professional_note": "Only if severity >= 6, else empty string"
+}}
+"""
+    try:
+        response = gemini.models.generate_content(model="gemini-2.5-flash-lite",contents=prompt)
+        text = response.text.strip()
+        if text.startswith("```"):
+            text = text.split("```")[1]
+            if text.startswith("json"):
+                text = text[4:]
+        report = json.loads(text.strip())
+        return jsonify({"ready": True, "report": report,
+                        "analysis": {"severity": analysis["severity"],
+                                     "level": analysis["level"],
+                                     "stats": analysis["stats"],
+                                     "weeks": analysis["weeks"]}})
+    except Exception as e:
+        return jsonify({"ready": False, "message": str(e)})
 
 # ── Auth ───────────────────────────────────────────────────
 
@@ -330,6 +575,5 @@ def logout():
     supabase.auth.sign_out()
     return jsonify({"success": True})
 
-
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, host="0.0.0.0", port=5000)
