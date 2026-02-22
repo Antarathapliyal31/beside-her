@@ -569,6 +569,8 @@ def chat_api():
         analysis["stats"]    = {
             "mood":    {"avg": sv.get("mood_avg", 0)},
             "anxiety": {"avg": sv.get("anxiety_avg", 0)},
+            "energy":  {"avg": sv.get("energy_avg", 0)},
+            "sleep":   {"avg": sv.get("sleep_avg", 0)},
         }
         analysis["weeks"] = ph.get("weeks", 0)
         analysis["phase"] = ph.get("phase", "unknown")
@@ -579,10 +581,14 @@ def chat_api():
         analysis["ready"] = False
 
     if analysis["ready"]:
+        energy  = analysis['stats']['energy']['avg']
+        anxiety = analysis['stats']['anxiety']['avg']
+        mood    = analysis['stats']['mood']['avg']
+
         context = (
             f"Severity: {analysis['severity']}/10, Level: {analysis['level']}, "
-            f"Mood: {analysis['stats']['mood']['avg']}/5 ({analysis['trends']['mood_trend']}), "
-            f"Anxiety: {analysis['stats']['anxiety']['avg']}/5, "
+            f"Mood: {mood}/5 ({analysis['trends']['mood_trend']}), "
+            f"Anxiety: {anxiety}/5, Energy: {energy}/5, "
             f"Weeks postpartum: {analysis['weeks']}, Phase: {analysis['phase']}"
         )
     else:
@@ -592,6 +598,26 @@ def chat_api():
 You are a warm postpartum support guide helping a partner.
 Her current data: {context}
 Partner asks: {message}
+If the question is about food, nutrition, or what to cook/prepare:
+- Your goal is to tell the PARTNER what to prepare FOR her to replenish her energy
+- Never suggest she cook for herself — the partner is the one taking action
+- Postpartum nutrition priorities the partner should know:
+  * Iron-rich foods (she lost blood during delivery): spinach, lentils, red meat, beans
+  * Omega-3s for mood and brain recovery: salmon, walnuts, flaxseed
+  * Calcium if breastfeeding: dairy, fortified oat milk, leafy greens
+  * Hydration is critical especially if breastfeeding: soups, smoothies, water-rich foods
+  * Avoid processed/sugary foods that cause energy crashes
+- If energy < 2: she is depleted — partner should make fast high-energy AND nutritious foods
+  e.g. peanut butter banana smoothie (iron + omega3), lentil soup (iron), spinach omelette
+  Tell the partner: "She needs quick fuel that actually restores her — make this in 10 minutes"
+- If energy 2-3: simple but nourishing meals
+  e.g. salmon with rice, lentil dal, eggs with spinach and avocado toast
+- If energy > 3: more restorative nutrition
+  e.g. quinoa bowls with greens, hearty bone broth soups, balanced plate with protein and veg
+- If anxiety > 3: recommend calming anti-anxiety foods
+  e.g. oats (serotonin), bananas (magnesium), chamomile tea, dark chocolate, walnuts
+- Always give 2-3 specific meal ideas the PARTNER can make for her right now
+- Mention WHY each food helps her recover — partner understanding the reason makes them more likely to act
 Answer warmly and specifically. Under 150 words.
 If severity is high (7+), gently mention professional support.
 Never give generic advice.
