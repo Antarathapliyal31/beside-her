@@ -293,6 +293,14 @@ def get_digest():
     prompt = f"""
 You are a postpartum support guide writing to a partner.
 Be warm, specific, and actionable. Never generic.
+Pronouns / audience rules (STRICT):
+- Address the partner as "you".
+- Refer to the mom as "she/her" or "your partner".
+- NEVER address the mom directly as "you" (no "you're feeling...", no "you need...").
+- The only place "you" can refer to the mom is inside the "ready_to_send" text message (because that message is from partner to mom).
+
+Be warm, specific, and actionable. Never generic.
+Never diagnose. Don't say "she has PPD". Say "she may be having a harder time".
 
 ML ANALYSIS:
 - Severity: {analysis['severity']}/10
@@ -373,7 +381,26 @@ def chat_api():
         .limit(45)\
         .execute().data
 
-    analysis = run_analysis(rows, baby_dob_str=baby_dob)
+    analysis = run_analysis(rows, baby_dob)
+
+    # ── Normalize output ──
+    if analysis.get("ready_for_ml"):
+        sv = analysis.get("severity", {})
+        ph = analysis.get("phase") or {}
+        analysis["ready"]    = True
+        analysis["level"]    = analysis.get("escalation", "green")
+        analysis["severity"] = sv.get("score", 0) if isinstance(sv, dict) else sv
+        analysis["stats"]    = {
+            "mood":    {"avg": sv.get("mood_avg", 0)},
+            "anxiety": {"avg": sv.get("anxiety_avg", 0)},
+        }
+        analysis["weeks"] = ph.get("weeks", 0)
+        analysis["phase"] = ph.get("phase", "unknown")
+        analysis["trends"] = {
+            "mood_trend": (analysis.get("trends") or {}).get("mood", {}).get("trend", "stable")
+        }
+    else:
+        analysis["ready"] = False
 
     if analysis["ready"]:
         context = (
@@ -394,10 +421,13 @@ If severity is high (7+), gently mention professional support.
 Never give generic advice.
 """
     try:
-        response = gemini.models.generate_content(model="gemini-2.5-flash-lite",contents=prompt)
+        response = gemini.models.generate_content(
+            model="gemini-2.5-flash-lite",
+            contents=prompt
+        )
         return jsonify({"response": response.text.strip()})
     except Exception as e:
-        return jsonify({"response": f"Error: {str(e)}"})
+        return jsonify({"response": f"AI error: {str(e)}"})
 
 
 @app.route("/api/weekly")
@@ -415,7 +445,30 @@ def get_weekly():
         .limit(7)\
         .execute().data
 
-    analysis = run_analysis(rows, baby_dob_str=baby_dob)
+    
+    analysis = run_analysis(rows, baby_dob)
+
+    
+    if analysis.get("ready_for_ml"):
+        sv = analysis.get("severity", {})
+        ph = analysis.get("phase") or {}
+        pt = analysis.get("patterns") or {}
+        analysis["ready"]    = True
+        analysis["level"]    = analysis.get("escalation", "green")
+        analysis["severity"] = sv.get("score", 0) if isinstance(sv, dict) else sv
+        analysis["stats"]    = {
+            "mood":    {"avg": sv.get("mood_avg", 0)},
+            "anxiety": {"avg": sv.get("anxiety_avg", 0)},
+            "energy":  {"avg": sv.get("energy_avg", 0)},
+            "sleep":   {"avg": sv.get("sleep_avg", 0)},
+        }
+        analysis["clusters"] = {"dominant": pt.get("dominant_pattern", "mixed")}
+        analysis["weeks"]    = ph.get("weeks", 0)
+        analysis["phase"]    = ph.get("phase", "unknown")
+        analysis["flags"]    = [{"message": f, "level": "warn"} for f in (analysis.get("flags") or {}).get("flags", [])]
+    else:
+        analysis["ready"] = False
+
 
     if not analysis["ready"]:
         return jsonify({"ready": False, "message": "Not enough data"})

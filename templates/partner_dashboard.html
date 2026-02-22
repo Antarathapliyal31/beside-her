@@ -347,8 +347,16 @@
     document.getElementById('stat-anxiety').textContent =
       `${a.stats.anxiety.avg}/5 ${a.trends.anxiety_trend === 'worsening' ? '↑' : '→'}`;
 
-    document.getElementById('stat-pattern').textContent =
-      a.clusters.dominant || '—';
+    const patternLabels = {
+    "good":  "✨ Mostly good days",
+    "mixed": "〰️ Mixed days",
+    "hard":  "💙 Mostly hard days",
+    "hard_days": "💙 Mostly hard days",
+    "good_days": "✨ Mostly good days",
+    "moderate": "〰️ Mixed days"
+    };
+    document.getElementById('stat-pattern').textContent = 
+    patternLabels[a.clusters.dominant] || a.clusters.dominant;
 
     // Escalation badge
     const confBadge = document.getElementById('conf-badge');
@@ -358,13 +366,23 @@
     confBadge.style.color      = levelColors[a.level];
 
     // Flags
+    // Flags
+const flagLabels = {
+  "sleep_disruption":      "Poor sleep for 3+ days",
+  "silence_alert":         "Hasn't logged in recently",
+  "high_risk_combination": "Low mood + high anxiety together",
+  "persistent_low_mood":   "Low mood for 3+ days",
+  "high_anxiety":          "Elevated anxiety for 3+ days",
+  "declining_mood":        "Mood getting worse over time"
+};
+
     const flagsDiv = document.getElementById('flags-list');
     if (a.flags && a.flags.length) {
-      flagsDiv.innerHTML = a.flags.map(f =>
-        `<div class="flag-item flag-${f.level}">
-           ${f.level === 'urgent' ? '⚠️' : '🔔'} ${f.message}
-         </div>`
-      ).join('');
+    flagsDiv.innerHTML = a.flags.map(f =>
+    `<div class="flag-item flag-${f.level}">
+       ${f.level === 'urgent' ? '⚠️' : '🔔'} ${flagLabels[f.message] || f.message}
+     </div>`
+    ).join('');
     }
 
     // ── Render Today's Playbook ──
