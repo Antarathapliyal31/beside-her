@@ -36,7 +36,7 @@
 
       <div class="form-group">
         <label>Date</label>
-        <input type="date" id="date"/>
+        <input type="date" id="date" readonly/>
       </div>
 
       <div class="form-group">
@@ -178,7 +178,11 @@
 </div>
 
 <script>
-  document.getElementById("date").valueAsDate = new Date();
+  const today = new Date(
+  new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+  document.getElementById("date").value = today;
+  document.getElementById("date").max   = today;
+  document.getElementById("date").min   = today;
 
   const vals = {
     mood: null,
@@ -230,7 +234,11 @@
     document.querySelectorAll('.e-btn')
             .forEach(b => b.classList.remove('selected'));
     document.getElementById('notes').value = '';
-    document.getElementById('date').valueAsDate = new Date();
+    const today = new Date(
+    new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+    document.getElementById('date').value = today;
+    document.getElementById('date').max   = today;
+    document.getElementById('date').min   = today;
     Object.keys(vals).forEach(k => vals[k] = null);
   }
 </script>
