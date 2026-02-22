@@ -9,4 +9,3 @@ httpx
 vitallens
 imageio[ffmpeg]
 imageio-ffmpeg
-imghdr
