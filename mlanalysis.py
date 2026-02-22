@@ -6,10 +6,76 @@ Techniques: Confidence System → Severity Score → Rule-Based Flags
             → Postpartum Phase Detection
 """
 
+import os
 import numpy as np
 from datetime import date, datetime
 from sklearn.linear_model import LinearRegression
 from sklearn.cluster import KMeans
+from supabase import create_client
+from dotenv import load_dotenv
+
+load_dotenv()
+
+# ─────────────────────────────────────────────
+# SUPABASE CLIENT
+# ─────────────────────────────────────────────
+
+supabase = create_client(
+    os.getenv("SUPABASE_URL"),
+    os.getenv("SUPABASE_KEY")
+)
+
+
+# ─────────────────────────────────────────────
+# SUPABASE DATA FETCH
+# ─────────────────────────────────────────────
+
+def fetch_user_data(user_id: str) -> dict:
+    """
+    Fetches checkins and baby_dob from Supabase for a given user_id.
+    Returns a dict with 'entries' (list of dicts) and 'baby_dob' (str).
+    Raises ValueError if user profile or checkins are not found.
+    """
+    # Fetch mom profile for baby_dob
+    profile_response = supabase.table("mom_profile") \
+        .select("baby_dob, name") \
+        .eq("id", user_id) \
+        .single() \
+        .execute()
+
+    if not profile_response.data:
+        raise ValueError(f"No profile found for user_id: {user_id}")
+
+    baby_dob = profile_response.data["baby_dob"]
+    name     = profile_response.data["name"]
+
+    # Fetch all checkins for this user, ordered by date ascending
+    checkins_response = supabase.table("checkins") \
+        .select("date, mood, anxiety, energy, sleep_quality, notes") \
+        .eq("user_id", user_id) \
+        .order("date", desc=False) \
+        .execute()
+
+    if not checkins_response.data:
+        raise ValueError(f"No checkins found for user_id: {user_id}")
+
+    # Normalize date format — Supabase may return full timestamps
+    entries = []
+    for row in checkins_response.data:
+        entries.append({
+            "date":          row["date"][:10],        # ensure YYYY-MM-DD
+            "mood":          row["mood"],
+            "anxiety":       row["anxiety"],
+            "energy":        row["energy"],
+            "sleep_quality": row["sleep_quality"],
+            "notes":         row.get("notes") or ""   # notes may be null
+        })
+
+    return {
+        "name":     name,
+        "baby_dob": baby_dob,
+        "entries":  entries
+    }
 
 
 # ─────────────────────────────────────────────
@@ -213,6 +279,7 @@ def detect_trends(entries: list) -> dict:
     Uses actual date distances (not sequential index) so time gaps are respected.
     Returns slope and trend label for each feature.
     """
+    # Use real day numbers relative to first entry
     first_date = datetime.strptime(entries[0]["date"], "%Y-%m-%d")
     days = np.array([
         (datetime.strptime(e["date"], "%Y-%m-%d") - first_date).days
@@ -240,6 +307,7 @@ def detect_trends(entries: list) -> dict:
             "trend": label
         }
 
+    # Add declining_mood flag if applicable
     if results["mood"]["trend"] == "worsening":
         results["declining_mood_flag"] = True
 
@@ -475,83 +543,54 @@ def run_full_analysis(entries: list, baby_dob: str) -> dict:
 
 
 # ─────────────────────────────────────────────
-# QUICK TEST — remove before production
+# RUN ANALYSIS FOR A USER — entry point
+# ─────────────────────────────────────────────
+
+def analyse_user(user_id: str) -> dict:
+    """
+    Full pipeline: fetch from Supabase → run all ML → return result.
+    This is what your backend/app.py should call.
+    """
+    data = fetch_user_data(user_id)
+    result = run_full_analysis(data["entries"], data["baby_dob"])
+    result["name"] = data["name"]
+    return result
+
+
+# ─────────────────────────────────────────────
+# QUICK TEST — pass a real user_id to test
 # ─────────────────────────────────────────────
 
 if __name__ == "__main__":
-    from datetime import date, timedelta
+    import sys
 
-    today = date.today()
+    # Pass user_id as command line argument:
+    #   python ml_analysis.py <user_id>
+    # Or paste it directly below for quick testing:
+    USER_ID = sys.argv[1] if len(sys.argv) > 1 else None
 
-    STORIES = [
-        {
-            "name": "Sarah",
-            "baby_dob": (today - timedelta(weeks=2)).strftime("%Y-%m-%d"),
-            "description": "Week 2 — Baby Blues, Green/Yellow",
-            "data": [
-                (13, 4, 2, 3, 3), (12, 3, 3, 3, 3), (11, 4, 2, 3, 4),
-                (10, 3, 3, 2, 3), (9,  3, 2, 3, 3), (8,  4, 2, 3, 3),
-                (7,  3, 3, 2, 2), (6,  3, 2, 3, 3), (5,  4, 2, 3, 3),
-                (4,  3, 3, 2, 3), (3,  3, 2, 3, 3), (2,  4, 2, 3, 3),
-                (1,  3, 3, 2, 3),
-            ]
-        },
-        {
-            "name": "Maya",
-            "baby_dob": (today - timedelta(weeks=6)).strftime("%Y-%m-%d"),
-            "description": "Week 6 — Persisting symptoms, Orange",
-            "data": [
-                (40, 3, 3, 3, 3), (38, 3, 3, 2, 3), (35, 3, 3, 2, 2),
-                (32, 2, 3, 2, 2), (30, 2, 4, 2, 2), (27, 2, 4, 1, 2),
-                (25, 2, 4, 1, 2), (22, 1, 4, 1, 1), (20, 2, 4, 1, 2),
-                (18, 1, 5, 1, 1), (15, 2, 4, 1, 2), (12, 1, 5, 1, 1),
-                (10, 2, 4, 1, 2), (5,  1, 5, 1, 1), (4,  2, 4, 1, 2),
-                (3,  1, 5, 1, 1), (2,  2, 4, 2, 2), (1,  1, 4, 1, 1),
-            ]
-        },
-        {
-            "name": "Priya",
-            "baby_dob": (today - timedelta(weeks=10)).strftime("%Y-%m-%d"),
-            "description": "Week 10 — PPD Risk, Red",
-            "data": [
-                (45, 3, 3, 3, 3), (43, 3, 3, 2, 3), (40, 2, 3, 2, 3),
-                (38, 2, 4, 2, 2), (35, 2, 4, 1, 2), (32, 1, 4, 1, 1),
-                (30, 2, 4, 1, 2), (27, 1, 5, 1, 1), (25, 1, 5, 1, 1),
-                (22, 2, 4, 1, 2), (20, 1, 5, 1, 1), (18, 1, 4, 1, 1),
-                (15, 1, 5, 1, 1), (12, 2, 4, 1, 2), (10, 1, 5, 1, 1),
-                (8,  1, 4, 1, 1), (3,  1, 5, 1, 1), (2,  2, 4, 1, 2),
-                (1,  1, 5, 1, 1),
-            ]
-        }
-    ]
+    if not USER_ID:
+        print("Usage: python ml_analysis.py <user_id>")
+        print("Get your user_id from Supabase Dashboard → Authentication → Users")
+        sys.exit(1)
 
-    for story in STORIES:
-        # Convert seed tuples into entry dicts matching Supabase structure
-        entries = []
-        for (days_ago, mood, anxiety, energy, sleep_quality) in story["data"]:
-            entries.append({
-                "date":          (today - timedelta(days=days_ago)).strftime("%Y-%m-%d"),
-                "mood":          mood,
-                "anxiety":       anxiety,
-                "energy":        energy,
-                "sleep_quality": sleep_quality,
-                "notes":         ""
-            })
+    print(f"Fetching data for user: {USER_ID[:8]}...\n")
 
-        result = run_full_analysis(entries, baby_dob=story["baby_dob"])
+    result = analyse_user(USER_ID)
 
-        print(f"=== {story['name'].upper()} — {story['description']} ===")
-        print(f"Confidence:  {result['confidence']['label']}")
-        print(f"Escalation:  {result['escalation'].upper()}")
-        print(f"Severity:    {result['severity']['score']}/10")
-        print(f"Phase:       {result['phase']['label']} (Week {result['phase']['weeks']})")
-        print(f"Flags:       {result['flags']['flags']}")
-        print(f"Anomalies:   {result['anomalies']['anomaly_count']} days")
-        if result["trends"]:
-            print(f"Mood trend:  {result['trends']['mood']['trend']} (slope {result['trends']['mood']['slope']})")
-        print(f"Reasons:")
-        for r in result['severity']['reasons']:
-            print(f"  - {r}")
-        if result["patterns"]:
-            print(f"Week pattern: {result['patterns']['week_summary']}")
-        print()
+    print(f"=== {result['name'].upper()} ===")
+    print(f"Confidence:  {result['confidence']['label']} ({result['confidence']['entry_count']} entries)")
+    print(f"Escalation:  {result['escalation'].upper()}")
+    print(f"Severity:    {result['severity']['score']}/10")
+    print(f"Phase:       {result['phase']['label']} (Week {result['phase']['weeks']})")
+    print(f"Flags:       {result['flags']['flags']}")
+    print(f"Crisis:      {result['flags']['crisis_override']}")
+    print(f"Anomalies:   {result['anomalies']['anomaly_count']} days")
+    if result["trends"]:
+        print(f"Mood trend:  {result['trends']['mood']['trend']} (slope {result['trends']['mood']['slope']})")
+    print(f"Reasons:")
+    for r in result['severity']['reasons']:
+        print(f"  - {r}")
+    if result["patterns"]:
+        print(f"Week pattern: {result['patterns']['week_summary']}")
+    print(f"\nPhase context: {result['phase']['context']}")
